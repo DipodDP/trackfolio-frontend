@@ -22,7 +22,7 @@ const App: Component = () => {
       <Navigation />
       <div class={styles.App}>
         <header class={styles.header}>
-          <h1 className="font-extralight">Hello from Tailwind</h1>
+          <h1 class="font-extralight">Hello from Tailwind</h1>
           {/* <img src={logo} class={styles.logo} alt="logo" /> */}
           {/* <p> */}
           {/*   Edit <code>src/App.tsx</code> and save to reload. */}
