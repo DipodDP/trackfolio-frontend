@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background-dark text-primary-text font-body;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .grain-overlay {
+    @apply fixed top-0 left-0 right-0 bottom-0 w-full h-full pointer-events-none opacity-5 z-[100];
+    background-image: url('https://www.transparenttextures.com/patterns/subtle-white-feathers.png');
+  }
+
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-hover text-primary-text font-semibold px-4 py-2 rounded transition-colors;
+  }
+
+  .btn-secondary {
+    @apply bg-card-dark hover:bg-border-dark text-primary-text font-semibold px-4 py-2 rounded border border-border-dark transition-colors;
+  }
+
+  .card {
+    @apply bg-card-dark border border-border-dark rounded-lg p-6;
+  }
+
+  .input {
+    @apply bg-background-dark border border-border-dark rounded px-3 py-2 text-primary-text placeholder-secondary-text focus:outline-none focus:border-primary;
+  }
+}

@@ -48,6 +48,8 @@ This section contains the most critical information for ensuring the frontend co
 
 *   **Testing Strategy**: The high-level approach to unit, integration, and end-to-end testing is defined in **[10_testing_and_validation.md](./10_testing_and_validation.md)**.
 
+*   **Current Implementation Status**: For a real-time snapshot of development progress and what has actually been built versus what was planned, see **[CONTEXT.md](./CONTEXT.md)**. This document tracks phase completion, implementation differences, and priority recommendations. It is validated using Playwright MCP exploration.
+
 ---
 
 ## 6. Open Questions & Known Gaps

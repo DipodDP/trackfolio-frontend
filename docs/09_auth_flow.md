@@ -20,7 +20,9 @@ To balance security and user experience, the backend uses a two-token system:
 
 1.  **Access Token (`access_token`)**:
     -   A short-lived JWT returned in the login response body.
-    -   **Storage**: Stored in memory (e.g., in a Zustand store). It should **not** be persisted in `localStorage`.
+    -   **Documented Storage**: Should be stored in memory (e.g., in a Zustand store) and NOT persisted.
+    -   **Actual Implementation (2026-01-11)**: Currently stored in `sessionStorage` via `setAccessToken()` in `src/lib/api-client.ts`
+        - ⚠️ **Security Note**: Using `sessionStorage` is less secure than memory-only storage but provides better UX (survives page refreshes)
     -   **Usage**: Sent in the `Authorization: Bearer <token>` header for all authenticated API requests.
 
 2.  **Refresh Token (`refresh_token`)**:
@@ -67,13 +69,20 @@ To balance security and user experience, the backend uses a two-token system:
     -   The original failed request is automatically retried with the new token.
     -   If refresh fails, all session data is cleared, and the user is redirected to `/sign-in`.
 
-#### 4. Route Protection (Middleware)
+#### 4. Route Protection (Client-Side Guard)
+
+**Current Implementation (Updated 2026-01-11):**
 
 1.  **Trigger**: A user attempts to access a protected route (e.g., `/dashboard`).
-2.  **Middleware Execution**: The `src/middleware.ts` file runs on the server.
-3.  **Session Check**: The middleware checks for the presence of the `refresh_token` cookie on the incoming request (as the `access_token` is not available server-side).
-    -   **If cookie exists**: The request is allowed to proceed.
-    -   **If cookie does NOT exist**: The user is redirected to `/sign-in`.
+2.  **Component Execution**: The `AuthGuard` component wraps protected pages (client-side).
+3.  **Session Check**: The component checks for the presence of the `access_token` in `sessionStorage`.
+    -   **If token exists**: The protected content renders.
+    -   **If token does NOT exist**: The user is redirected to `/login` using Next.js router.
+
+**Note:** The documented server-side middleware approach (`src/middleware.ts`) is NOT currently implemented. Route protection is handled entirely client-side via the `AuthGuard` component. This means:
+- Protected routes can briefly flash before redirecting
+- There's no server-side session validation
+- The `refresh_token` cookie check is not implemented in middleware
 
 #### 5. User Logout
 
@@ -83,13 +92,34 @@ To balance security and user experience, the backend uses a two-token system:
 4.  **Client-Side Cleanup**: The frontend clears all session-related state from the Zustand store.
 5.  **Redirect**: The user is redirected to `/sign-in`.
 
-### What is intentionally NOT done yet?
--   "Remember Me" functionality (though the long-lived refresh token provides similar behavior).
--   Password reset flows.
--   Role-based access control (RBAC).
+### Current Implementation Summary (Updated 2026-01-11)
+
+**✅ What IS Implemented:**
+- Login page with form-urlencoded submission (`/login`)
+- Access token storage in `sessionStorage`
+- Axios request interceptor adding Bearer token to all requests
+- Axios response interceptor for automatic token refresh on 401 errors
+- Client-side route protection via `AuthGuard` component
+- Token management functions (`getAccessToken`, `setAccessToken`, `clearTokens`)
+- Automatic redirect to `/login` on auth failures
+
+**⚠️ Implementation Differences from Documentation:**
+- **Token Storage**: Uses `sessionStorage` instead of Zustand/memory-only (less secure but better UX)
+- **Route Protection**: Uses client-side `AuthGuard` component instead of Next.js middleware
+- **No User Profile Fetch**: Login doesn't fetch `/users/me` data after successful authentication
+- **No State Management**: Not using Zustand yet; relying on `sessionStorage` directly
+
+**❌ What is intentionally NOT done yet:**
+- Server-side middleware route protection (`src/middleware.ts`)
+- "Remember Me" functionality (though the long-lived refresh token provides similar behavior)
+- Password reset flows
+- Role-based access control (RBAC)
+- User profile/session state management with Zustand
 
 ### Verification & Open Questions
 -   **Verified**: This flow is now aligned with the backend documentation in `trackfolio/docs/technical/api-integration.md` and `KNOWLEDGE_BASE.md`. The use of `HttpOnly` cookies for refresh tokens is a security best practice.
 -   **To Be Confirmed**:
     -   The exact lifetime/expiration for the `access_token` and `refresh_token`. This is needed to fine-tune the client-side logic.
     -   The exact structure of the error response when a token is invalid versus when it is expired, to ensure the refresh logic triggers correctly.
+    -   Whether to migrate from `sessionStorage` to Zustand for better security
+    -   Whether to implement server-side middleware for route protection
