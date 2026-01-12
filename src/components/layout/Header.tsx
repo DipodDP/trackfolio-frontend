@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { clearTokens } from "@/lib/api-client";
+import { useAuthStore } from "@/store/authStore";
 import apiClient from "@/lib/api-client";
 import { Button } from "@/components/ui";
 
@@ -19,9 +19,14 @@ interface HeaderProps {
   userName?: string;
 }
 
-export function Header({ isSandbox = false, onToggleSandbox, userName = "A" }: HeaderProps) {
+export function Header({ isSandbox = false, onToggleSandbox, userName }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { user, logout } = useAuthStore();
+
+  // Use Zustand user if available, fallback to prop, then default
+  const displayName = user?.full_name || userName || "User";
+  const userInitial = displayName.charAt(0).toUpperCase();
 
   const handleLogout = async () => {
     try {
@@ -29,7 +34,7 @@ export function Header({ isSandbox = false, onToggleSandbox, userName = "A" }: H
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
-      clearTokens();
+      logout();
       router.push("/login");
     }
   };
@@ -105,8 +110,8 @@ export function Header({ isSandbox = false, onToggleSandbox, userName = "A" }: H
 
             {/* User Avatar & Logout */}
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-border-dark flex items-center justify-center text-primary-text font-bold text-sm">
-                {userName.charAt(0).toUpperCase()}
+              <div className="w-8 h-8 rounded-full bg-border-dark flex items-center justify-center text-primary-text font-bold text-sm" title={displayName}>
+                {userInitial}
               </div>
               <button
                 onClick={handleLogout}

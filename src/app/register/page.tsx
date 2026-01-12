@@ -26,18 +26,13 @@ export default function RegisterPage() {
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long");
-      return;
-    }
-
     setLoading(true);
 
     try {
       await apiClient.post("/users", {
-        full_name: formData.name,
+        name: formData.name,
         email: formData.email,
-        username: formData.username,
+        username: formData.username.toLowerCase(), // Backend requires lowercase
         password: formData.password,
       });
 
@@ -45,9 +40,16 @@ export default function RegisterPage() {
       router.push("/login?registered=true");
     } catch (err: any) {
       console.error("Registration error:", err);
-      setError(
-        err.response?.data?.detail || "Registration failed. Please try again."
-      );
+      if (err.response?.data?.detail && Array.isArray(err.response.data.detail)) {
+        // Handle Pydantic validation errors
+        const errorMsg = err.response.data.detail.map((d: any) => d.msg).join(", ");
+        setError(errorMsg);
+      } else if (err.response?.data?.detail) {
+        // Handle other string-based errors
+        setError(err.response.data.detail);
+      } else {
+        setError("Registration failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -140,7 +142,7 @@ export default function RegisterPage() {
               placeholder="••••••••"
             />
             <p className="text-xs text-secondary-text mt-1">
-              Min 8 chars, uppercase, lowercase, number, and special character
+              Ensure your password meets the security requirements.
             </p>
           </div>
 

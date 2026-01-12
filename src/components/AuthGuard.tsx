@@ -2,20 +2,19 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getAccessToken } from "@/lib/api-client";
+import { useAuthStore } from "@/store/authStore";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
-    const token = getAccessToken();
-    if (!token) {
+    if (!isAuthenticated) {
       router.push("/login");
     }
-  }, [router]);
+  }, [isAuthenticated, router]);
 
-  const token = getAccessToken();
-  if (!token) {
+  if (!isAuthenticated) {
     return null;
   }
 

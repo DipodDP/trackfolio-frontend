@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import apiClient, { setAccessToken } from "@/lib/api-client";
+import { useAuthStore, type User } from "@/store/authStore";
 import type { LoginResponse } from "@/types/api";
 
 export default function LoginPage() {
   const router = useRouter();
+  const login = useAuthStore((state) => state.login);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -32,6 +34,13 @@ export default function LoginPage() {
 
       const { access_token } = response.data;
       setAccessToken(access_token);
+
+      // Fetch user profile
+      const userResponse = await apiClient.get<User>("/users/me");
+      const user = userResponse.data;
+
+      // Update Zustand store with token and user
+      login(access_token, user);
 
       // Redirect to dashboard
       router.push("/dashboard");

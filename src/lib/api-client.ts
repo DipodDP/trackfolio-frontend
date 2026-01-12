@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
+import { useAuthStore } from "@/store/authStore";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1";
 
@@ -91,20 +92,20 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Token management functions
+// Token management functions using Zustand
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;
-  return sessionStorage.getItem("access_token");
+  return useAuthStore.getState().getAccessToken();
 }
 
 export function setAccessToken(token: string): void {
   if (typeof window === "undefined") return;
-  sessionStorage.setItem("access_token", token);
+  useAuthStore.getState().setAccessToken(token);
 }
 
 export function clearTokens(): void {
   if (typeof window === "undefined") return;
-  sessionStorage.removeItem("access_token");
+  useAuthStore.getState().logout();
 }
 
 export default apiClient;
