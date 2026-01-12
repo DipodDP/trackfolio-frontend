@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import { Header, CosmicBackground } from "@/components/layout";
 import { Badge, Button } from "@/components/ui";
@@ -8,6 +9,7 @@ import apiClient from "@/lib/api-client";
 import type { ApiClient } from "@/types/api";
 
 export default function ApiClientsPage() {
+  const router = useRouter();
   const [clients, setClients] = useState<ApiClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -182,11 +184,11 @@ export default function ApiClientsPage() {
                 {clients.map((client) => (
                   <div key={client.id} className="card">
                     <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4">
+                      <div className="flex items-start gap-4 flex-1">
                         <span className="material-symbols-outlined text-4xl text-primary">
                           link
                         </span>
-                        <div>
+                        <div className="flex-1">
                           <h3 className="text-lg font-display text-primary-text">
                             {client.broker_type.toUpperCase()}
                           </h3>
@@ -199,6 +201,24 @@ export default function ApiClientsPage() {
                             <span className="text-sm text-secondary-text">
                               ID: {client.id}
                             </span>
+                          </div>
+                          <div className="mt-4">
+                            <Button
+                              onClick={() =>
+                                router.push(
+                                  `/settings/accounts?clientId=${client.id}`
+                                )
+                              }
+                              size="sm"
+                              variant="secondary"
+                              leftIcon={
+                                <span className="material-symbols-outlined">
+                                  account_balance_wallet
+                                </span>
+                              }
+                            >
+                              View Accounts
+                            </Button>
                           </div>
                         </div>
                       </div>

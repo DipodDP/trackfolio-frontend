@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import { Header, CosmicBackground } from "@/components/layout";
 import { Card } from "@/components/ui";
@@ -16,132 +17,275 @@ import {
   type Position,
   type Recommendation,
 } from "@/components/dashboard";
-
-// Mock data - will be replaced with API calls
-const mockPositions: Position[] = [
-  {
-    ticker: "AAPL",
-    name: "Apple Inc.",
-    instrumentType: "Equity",
-    price: 200,
-    quantity: 1000,
-    total: 200000,
-    planTotal: 220000,
-    proportion: 16,
-    profit: { amount: 30000, percent: 15 },
-    targetProgress: 90,
-  },
-  {
-    ticker: "MSFT",
-    name: "Microsoft Corporation",
-    instrumentType: "Equity",
-    price: 400,
-    quantity: 200,
-    total: 80000,
-    planTotal: 80000,
-    proportion: 8,
-    profit: { amount: 10000, percent: 10 },
-    targetProgress: 90,
-  },
-  {
-    ticker: "GOOGL",
-    name: "Alphabet Inc.",
-    instrumentType: "Equity",
-    price: 150,
-    quantity: 500,
-    total: 75000,
-    planTotal: 75000,
-    proportion: 7,
-    profit: { amount: 5000, percent: 7 },
-    targetProgress: 85,
-  },
-  {
-    ticker: "TLT",
-    name: "iShares 20+ Year Treasury",
-    instrumentType: "Bond",
-    price: 100,
-    quantity: 500,
-    total: 50000,
-    planTotal: 50000,
-    proportion: 4,
-    profit: { amount: -2000, percent: -4 },
-    targetProgress: 32,
-  },
-  {
-    ticker: "BND",
-    name: "Vanguard Total Bond",
-    instrumentType: "Bond",
-    price: 80,
-    quantity: 400,
-    total: 32000,
-    planTotal: 30000,
-    proportion: 3,
-    profit: { amount: 2000, percent: 6 },
-    targetProgress: 95,
-  },
-];
-
-const mockRecommendations: Recommendation[] = [
-  {
-    action: "SELL",
-    ticker: "NVDA",
-    quantity: 3,
-    reason: "Overweight after recent surge",
-    type: "rebalance",
-  },
-  {
-    action: "BUY",
-    ticker: "TSLA",
-    quantity: 5,
-    reason: "Realign with target tech exposure",
-    type: "rebalance",
-  },
-  {
-    action: "BUY",
-    ticker: "TLT",
-    quantity: 10,
-    reason: "Increase bond allocation",
-    type: "risk",
-  },
-];
-
-const allocationSegments = {
-  current: [
-    { label: "Stocks", value: 65, color: "bg-zinc-600" },
-    { label: "Bonds", value: 20, color: "bg-zinc-500" },
-    { label: "Cash", value: 10, color: "bg-zinc-400" },
-    { label: "Alternative", value: 5, color: "bg-zinc-300" },
-  ],
-  target: [
-    { label: "Stocks", value: 60, color: "bg-zinc-600" },
-    { label: "Bonds", value: 25, color: "bg-zinc-500" },
-    { label: "Cash", value: 5, color: "bg-zinc-400" },
-    { label: "Alternative", value: 10, color: "bg-zinc-300" },
-  ],
-};
-
-const legendItems = [
-  { label: "Stocks", color: "bg-zinc-600" },
-  { label: "Bonds", color: "bg-zinc-500" },
-  { label: "Cash", color: "bg-zinc-400" },
-  { label: "Alternative", color: "bg-zinc-300" },
-];
+import { useAppStore } from "@/store/appStore";
+import { useAuthStore } from "@/store/authStore";
+import apiClient from "@/lib/api-client";
+import { formatMoneyValue, moneyValueToNumber } from "@/lib/utils/money";
+import type { PortfolioAnalysisResponse } from "@/types/api";
 
 export default function DashboardPage() {
-  const [isSandbox, setIsSandbox] = useState(true);
+  const router = useRouter();
+  const { selectedApiClientId, selectedAccountIds, additionalCash } =
+    useAppStore();
+  const { user } = useAuthStore();
+
+  const [portfolioData, setPortfolioData] =
+    useState<PortfolioAnalysisResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastUpdated] = useState(new Date());
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [isSandbox, setIsSandbox] = useState(true);
+
+  const fetchPortfolioData = async () => {
+    if (!selectedApiClientId || selectedAccountIds.length === 0) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await apiClient.post<PortfolioAnalysisResponse>(
+        `/api-clients/${selectedApiClientId}/portfolio-analysis/full`,
+        {
+          account_ids: selectedAccountIds,
+          additional_cash: additionalCash,
+        }
+      );
+
+      setPortfolioData(response.data);
+      setLastUpdated(new Date());
+    } catch (err: any) {
+      console.error("Failed to fetch portfolio data:", err);
+      setError(
+        err.response?.data?.detail ||
+          "Failed to load portfolio data. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPortfolioData();
+  }, [selectedApiClientId, selectedAccountIds, additionalCash]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await fetchPortfolioData();
     setIsRefreshing(false);
   };
 
   const handleToggleSandbox = () => {
     setIsSandbox((prev) => !prev);
   };
+
+  // Show empty state if no accounts selected
+  if (!selectedApiClientId || selectedAccountIds.length === 0) {
+    return (
+      <AuthGuard>
+        <CosmicBackground />
+        <div className="grain-overlay" />
+
+        <div className="relative min-h-screen">
+          <Header
+            isSandbox={isSandbox}
+            onToggleSandbox={handleToggleSandbox}
+            userName={user?.username || "User"}
+          />
+
+          <main className="container-app py-12">
+            <div className="card p-8 text-center max-w-2xl mx-auto">
+              <span className="material-symbols-outlined text-6xl text-secondary-text mb-4">
+                account_balance_wallet
+              </span>
+              <h2 className="text-2xl font-display text-primary-text mb-4">
+                No Accounts Selected
+              </h2>
+              <p className="text-secondary-text mb-6">
+                Please connect a broker and select accounts to view your
+                portfolio analysis.
+              </p>
+              <button
+                onClick={() => router.push("/settings/api-clients")}
+                className="btn btn-primary"
+              >
+                <span className="material-symbols-outlined">settings</span>
+                Go to Settings
+              </button>
+            </div>
+          </main>
+        </div>
+      </AuthGuard>
+    );
+  }
+
+  // Show loading state
+  if (isLoading && !portfolioData) {
+    return (
+      <AuthGuard>
+        <CosmicBackground />
+        <div className="grain-overlay" />
+
+        <div className="relative min-h-screen">
+          <Header
+            isSandbox={isSandbox}
+            onToggleSandbox={handleToggleSandbox}
+            userName={user?.username || "User"}
+          />
+
+          <main className="container-app py-12">
+            <div className="card p-12 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-secondary-text">
+                Loading portfolio data...
+              </p>
+            </div>
+          </main>
+        </div>
+      </AuthGuard>
+    );
+  }
+
+  // Show error state
+  if (error && !portfolioData) {
+    return (
+      <AuthGuard>
+        <CosmicBackground />
+        <div className="grain-overlay" />
+
+        <div className="relative min-h-screen">
+          <Header
+            isSandbox={isSandbox}
+            onToggleSandbox={handleToggleSandbox}
+            userName={user?.username || "User"}
+          />
+
+          <main className="container-app py-12">
+            <div className="card p-8 border-2 border-error bg-error/10 max-w-2xl mx-auto">
+              <div className="flex items-start gap-4">
+                <span className="material-symbols-outlined text-error text-4xl">
+                  error
+                </span>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-primary-text mb-2">
+                    Error Loading Portfolio
+                  </h3>
+                  <p className="text-secondary-text mb-4">{error}</p>
+                  <div className="flex gap-4">
+                    <button onClick={handleRefresh} className="btn btn-primary">
+                      Try Again
+                    </button>
+                    <button
+                      onClick={() => router.push("/settings/accounts")}
+                      className="btn btn-secondary"
+                    >
+                      Change Accounts
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      </AuthGuard>
+    );
+  }
+
+  if (!portfolioData) {
+    return null;
+  }
+
+  // Transform API data to component format
+  const { consolidated_portfolio, enriched_positions, plan_positions } =
+    portfolioData;
+
+  const totalPortfolio = moneyValueToNumber(
+    consolidated_portfolio.total_amount_portfolio
+  );
+  const totalShares = moneyValueToNumber(
+    consolidated_portfolio.total_amount_shares
+  );
+  const totalBonds = moneyValueToNumber(
+    consolidated_portfolio.total_amount_bonds
+  );
+  const totalEtf = moneyValueToNumber(consolidated_portfolio.total_amount_etf);
+  const totalCurrencies = moneyValueToNumber(
+    consolidated_portfolio.total_amount_currencies
+  );
+
+  // Calculate total P/L from enriched positions
+  const totalProfitLoss = enriched_positions.reduce((sum, pos) => {
+    return sum + pos.profit;
+  }, 0);
+  const plPercentage = totalPortfolio > 0 ? (totalProfitLoss / totalPortfolio) * 100 : 0;
+
+  // Convert enriched positions to Position type
+  const positions: Position[] = enriched_positions.slice(0, 5).map((pos) => ({
+    ticker: pos.ticker,
+    name: pos.name,
+    instrumentType: pos.instrument_type,
+    price: moneyValueToNumber(pos.current_price),
+    quantity: pos.quantity,
+    total: moneyValueToNumber(pos.total),
+    planTotal: 0, // Would need to join with plan_positions
+    proportion: pos.proportion_in_portfolio * 100,
+    profit: {
+      amount: pos.profit,
+      percent: pos.profit_fifo,
+    },
+    targetProgress: 0, // Would need target data
+  }));
+
+  // Convert plan positions to recommendations
+  const recommendations: Recommendation[] = plan_positions
+    .filter((pos) => pos.to_buy_lots !== 0)
+    .slice(0, 3)
+    .map((pos) => ({
+      action: pos.to_buy_lots > 0 ? "BUY" : "SELL",
+      ticker: pos.ticker,
+      quantity: Math.abs(pos.to_buy_lots),
+      reason:
+        pos.to_buy_lots > 0
+          ? `Target allocation: ${(pos.plan_proportion_in_portfolio * 100).toFixed(1)}%`
+          : "Reduce position to target",
+      type: "rebalance" as const,
+    }));
+
+  // Calculate allocation segments
+  const totalAssets = totalShares + totalBonds + totalEtf + totalCurrencies;
+  const allocationSegments = {
+    current: [
+      {
+        label: "Shares",
+        value: totalAssets > 0 ? (totalShares / totalAssets) * 100 : 0,
+        color: "bg-primary",
+      },
+      {
+        label: "Bonds",
+        value: totalAssets > 0 ? (totalBonds / totalAssets) * 100 : 0,
+        color: "bg-coral",
+      },
+      {
+        label: "ETFs",
+        value: totalAssets > 0 ? (totalEtf / totalAssets) * 100 : 0,
+        color: "bg-success",
+      },
+      {
+        label: "Cash",
+        value: totalAssets > 0 ? (totalCurrencies / totalAssets) * 100 : 0,
+        color: "bg-warning",
+      },
+    ],
+    target: [],
+  };
+
+  const legendItems = allocationSegments.current.map((segment) => ({
+    label: segment.label,
+    color: segment.color,
+  }));
 
   return (
     <AuthGuard>
@@ -152,7 +296,7 @@ export default function DashboardPage() {
         <Header
           isSandbox={isSandbox}
           onToggleSandbox={handleToggleSandbox}
-          userName="Alex"
+          userName={user?.username || "User"}
         />
 
         <main className="container-app py-12 md:py-16">
@@ -162,21 +306,43 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-6 mb-8">
             <StatCard
               title="Total Portfolio Value"
-              value="$1,245,678.90"
-              change={{ value: "2.34%", isPositive: true }}
+              value={formatMoneyValue(
+                consolidated_portfolio.total_amount_portfolio,
+                { decimals: 2 }
+              )}
+              change={{
+                value: `${plPercentage >= 0 ? "+" : ""}${plPercentage.toFixed(2)}%`,
+                isPositive: plPercentage >= 0,
+              }}
               accentColor="primary"
+              data-testid="portfolio-total"
             />
             <StatCard
               title="Unrealized P/L"
-              value="+$54,321.05"
-              change={{ value: "4.56%", isPositive: true }}
+              value={`${totalProfitLoss >= 0 ? "+" : ""}${formatMoneyValue(
+                {
+                  currency: consolidated_portfolio.total_amount_portfolio.currency,
+                  units: Math.floor(totalProfitLoss),
+                  nano: Math.round(
+                    (totalProfitLoss - Math.floor(totalProfitLoss)) * 1_000_000_000
+                  ),
+                },
+                { decimals: 2 }
+              )}`}
+              change={{
+                value: `${plPercentage >= 0 ? "+" : ""}${plPercentage.toFixed(2)}%`,
+                isPositive: plPercentage >= 0,
+              }}
               icon="trending_up"
               accentColor="success"
             />
             <StatCard
               title="Available Cash"
-              value="$123,456.78"
-              subtitle="10.1% of Portfolio"
+              value={formatMoneyValue(
+                consolidated_portfolio.total_amount_currencies,
+                { decimals: 2 }
+              )}
+              subtitle={`${((totalCurrencies / totalPortfolio) * 100).toFixed(1)}% of Portfolio`}
               accentColor="coral"
             />
           </div>
@@ -188,16 +354,12 @@ export default function DashboardPage() {
               {/* Risk Allocation */}
               <Card>
                 <h2 className="text-lg font-semibold text-primary-text mb-4">
-                  Risk Allocation
+                  Asset Allocation
                 </h2>
                 <div className="space-y-4">
                   <AllocationBar
                     label="Current Allocation"
                     segments={allocationSegments.current}
-                  />
-                  <AllocationBar
-                    label="Target Allocation"
-                    segments={allocationSegments.target}
                   />
                 </div>
                 <AllocationLegend items={legendItems} />
@@ -216,24 +378,30 @@ export default function DashboardPage() {
                     View All Positions →
                   </a>
                 </div>
-                <PositionsTable positions={mockPositions} />
+                <PositionsTable
+                  positions={positions}
+                  data-testid="positions-table"
+                />
               </Card>
             </div>
 
             {/* Right Column - Recommendations & Quick Actions */}
             <div className="col-span-12 lg:col-span-4 space-y-6">
               {/* Rebalancing Recommendations */}
-              <Card>
-                <h2 className="text-lg font-semibold text-primary-text mb-4">
-                  Rebalancing Recommendations
-                </h2>
-                <RecommendationsGrid
-                  recommendations={mockRecommendations}
-                  onRecommendationClick={(rec) =>
-                    console.log("Clicked recommendation:", rec)
-                  }
-                />
-              </Card>
+              {recommendations.length > 0 && (
+                <Card>
+                  <h2 className="text-lg font-semibold text-primary-text mb-4">
+                    Rebalancing Recommendations
+                  </h2>
+                  <RecommendationsGrid
+                    recommendations={recommendations}
+                    onRecommendationClick={(rec) =>
+                      console.log("Clicked recommendation:", rec)
+                    }
+                    data-testid="recommendation-card"
+                  />
+                </Card>
+              )}
 
               {/* Quick Actions */}
               <Card>
@@ -247,8 +415,7 @@ export default function DashboardPage() {
 
           {/* Data Freshness Footer */}
           <DataFreshness
-            lastUpdated={lastUpdated}
-            isStale={false}
+            lastUpdated={lastUpdated || new Date()}
             onRefresh={handleRefresh}
             isRefreshing={isRefreshing}
           />
