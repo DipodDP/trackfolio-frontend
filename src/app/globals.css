@@ -3,6 +3,22 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* CSS Variables for theming */
+    --color-primary: #D72C2C;
+    --color-primary-hover: #B52424;
+    --color-primary-text: #F2E3C2;
+    --color-secondary-text: #A9A9B4;
+    --color-background-dark: #121828;
+    --color-background-deeper: #0A0F28;
+    --color-card-dark: #1A2238;
+    --color-border-dark: #3A4466;
+    --color-coral: #E86854;
+    --color-success: #4CAF50;
+    --color-warning: #FFC107;
+    --color-error: #D8232A;
+  }
+
   body {
     @apply bg-background-dark text-primary-text font-body;
     -webkit-font-smoothing: antialiased;
@@ -12,27 +28,265 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
   }
+
+  /* Focus styles for accessibility */
+  :focus-visible {
+    @apply outline-none ring-2 ring-coral ring-offset-2 ring-offset-background-dark;
+  }
 }
 
 @layer components {
+  /* Grain Texture Overlay */
   .grain-overlay {
-    @apply fixed top-0 left-0 right-0 bottom-0 w-full h-full pointer-events-none opacity-5 z-[100];
+    @apply fixed inset-0 w-full h-full pointer-events-none z-[100];
     background-image: url('https://www.transparenttextures.com/patterns/subtle-white-feathers.png');
+    opacity: 0.05;
+  }
+
+  /* Button Variants */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-semibold text-sm uppercase tracking-wider rounded-lg transition-all duration-fast;
   }
 
   .btn-primary {
-    @apply bg-primary hover:bg-primary-hover text-primary-text font-semibold px-4 py-2 rounded transition-colors;
+    @apply btn px-6 py-3 bg-primary text-primary-text hover:bg-primary-hover active:bg-primary-active shadow-rocket;
+    @apply focus:ring-2 focus:ring-coral focus:ring-offset-2 focus:ring-offset-background-dark;
   }
 
   .btn-secondary {
-    @apply bg-card-dark hover:bg-border-dark text-primary-text font-semibold px-4 py-2 rounded border border-border-dark transition-colors;
+    @apply btn px-6 py-3 bg-transparent border-2 border-coral text-coral;
+    @apply hover:bg-coral hover:text-background-dark;
+    @apply focus:ring-2 focus:ring-coral focus:ring-offset-2 focus:ring-offset-background-dark;
   }
 
+  .btn-ghost {
+    @apply btn px-6 py-3 bg-transparent text-primary-text;
+    @apply hover:bg-primary-text/10;
+  }
+
+  .btn-outline {
+    @apply btn px-6 py-3 bg-transparent border-2 border-border-dark text-secondary-text;
+    @apply hover:bg-border-dark hover:text-primary-text;
+  }
+
+  .btn-icon {
+    @apply w-10 h-10 rounded-lg bg-primary-text/10 text-primary-text flex items-center justify-center;
+    @apply hover:bg-coral hover:text-background-dark transition-colors duration-fast;
+  }
+
+  /* Button Sizes */
+  .btn-sm {
+    @apply px-4 py-2 text-xs;
+  }
+
+  .btn-lg {
+    @apply px-8 py-4 text-base;
+  }
+
+  /* Card Variants */
   .card {
-    @apply bg-card-dark border border-border-dark rounded-lg p-6;
+    @apply bg-card-dark border border-border-dark/20 rounded-xl p-6 shadow-lg;
   }
 
+  .card-accent {
+    @apply bg-card-dark rounded-lg p-4 border-l-4 border-primary;
+    @apply hover:border-coral transition-colors duration-normal;
+  }
+
+  .card-interactive {
+    @apply card hover:shadow-2xl hover:border-coral/50 transition-all duration-normal;
+  }
+
+  /* Input Fields */
   .input {
-    @apply bg-background-dark border border-border-dark rounded px-3 py-2 text-primary-text placeholder-secondary-text focus:outline-none focus:border-primary;
+    @apply w-full px-4 py-3 bg-background-deeper border-2 border-secondary-text/30 rounded-lg;
+    @apply text-primary-text placeholder:text-secondary-text;
+    @apply focus:border-coral focus:ring-2 focus:ring-coral/20 transition-all duration-fast outline-none;
+  }
+
+  .input-error {
+    @apply border-error ring-2 ring-error/20;
+  }
+
+  .input-success {
+    @apply border-success ring-2 ring-success/20;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-primary-text mb-2;
+  }
+
+  .helper-text {
+    @apply text-xs text-secondary-text mt-1;
+  }
+
+  /* Table Styles */
+  .table {
+    @apply w-full text-sm;
+  }
+
+  .table thead {
+    @apply border-b border-border-dark;
+  }
+
+  .table th {
+    @apply font-bold pb-2 pr-4 text-secondary-text text-left;
+  }
+
+  .table tbody {
+    @apply divide-y divide-border-dark/50;
+  }
+
+  .table tr {
+    @apply hover:bg-background-dark transition-colors duration-fast;
+  }
+
+  .table td {
+    @apply pr-4 py-2;
+  }
+
+  /* Badge Variants */
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider;
+  }
+
+  .badge-success {
+    @apply badge bg-success/20 text-success;
+  }
+
+  .badge-error {
+    @apply badge bg-error/20 text-error;
+  }
+
+  .badge-warning {
+    @apply badge bg-warning/20 text-warning;
+  }
+
+  .badge-info {
+    @apply badge bg-info/20 text-info;
+  }
+
+  .badge-coral {
+    @apply badge bg-coral/20 text-coral;
+  }
+
+  .badge-neutral {
+    @apply badge bg-secondary-text/20 text-secondary-text;
+  }
+
+  /* Progress Bar */
+  .progress {
+    @apply h-3 border border-border-dark rounded-full w-full bg-background-dark/50 overflow-hidden;
+  }
+
+  .progress-bar {
+    @apply h-full bg-coral transition-all duration-normal;
+  }
+
+  /* Glass Effect */
+  .glass {
+    @apply bg-background-dark/80 backdrop-blur-sm;
+  }
+
+  /* Header Styles */
+  .header {
+    @apply sticky top-0 z-50 glass border-b border-border-dark;
+  }
+
+  /* Navigation Tabs */
+  .nav-link {
+    @apply text-sm font-medium text-secondary-text hover:text-primary-text transition-colors duration-fast;
+  }
+
+  .nav-link-active {
+    @apply text-primary-text;
+  }
+
+  /* Decorative Elements */
+  .star {
+    @apply absolute bg-primary-text opacity-60;
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  }
+
+  .star-sm { @apply w-1.5 h-1.5; }
+  .star-md { @apply w-2.5 h-2.5; }
+  .star-lg { @apply w-3.5 h-3.5; }
+
+  .diagonal-line {
+    @apply absolute h-px;
+    background: linear-gradient(90deg, rgba(242, 227, 194, 0), rgba(242, 227, 194, 0.3));
+    transform-origin: left;
+  }
+
+  /* Skewed Background */
+  .skewed-bg {
+    @apply absolute inset-0 -skew-y-3 bg-card-dark/50;
+  }
+
+  /* Material Symbols Icon Styles */
+  .material-symbols-outlined {
+    font-variation-settings:
+      'FILL' 0,
+      'wght' 300,
+      'GRAD' 0,
+      'opsz' 24;
+  }
+
+  /* Loading Skeleton */
+  .skeleton {
+    @apply bg-border-dark/50 animate-pulse rounded;
+  }
+
+  /* Scrollbar Styles */
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-background-dark;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-border-dark rounded-full hover:bg-secondary-text;
+  }
+
+  /* Text Colors for Values */
+  .text-positive {
+    @apply text-success;
+  }
+
+  .text-negative {
+    @apply text-error;
+  }
+
+  /* Container */
+  .container-app {
+    @apply container mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+@layer utilities {
+  /* Letter Spacing for Brand */
+  .tracking-brand {
+    letter-spacing: 0.2em;
+  }
+
+  /* Text Shadow */
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Gradient Text */
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-coral bg-clip-text text-transparent;
+  }
+
+  /* Reduced Motion */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }

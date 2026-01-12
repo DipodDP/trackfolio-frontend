@@ -64,16 +64,16 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="username" className="block text-sm font-medium mb-2">
-              Email
+              Username or Email
             </label>
             <input
               id="username"
-              type="email"
+              type="text"
               required
               className="input w-full"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="username or you@example.com"
             />
           </div>
 

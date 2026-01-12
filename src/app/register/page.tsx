@@ -35,7 +35,7 @@ export default function RegisterPage() {
 
     try {
       await apiClient.post("/users", {
-        name: formData.name,
+        full_name: formData.name,
         email: formData.email,
         username: formData.username,
         password: formData.password,
@@ -139,6 +139,9 @@ export default function RegisterPage() {
               onChange={handleChange}
               placeholder="••••••••"
             />
+            <p className="text-xs text-secondary-text mt-1">
+              Min 8 chars, uppercase, lowercase, number, and special character
+            </p>
           </div>
 
           <div>
