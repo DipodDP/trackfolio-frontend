@@ -4,8 +4,11 @@ import type { MoneyValue } from "@/types/api";
  * Convert MoneyValue to decimal number
  * MoneyValue has units (integer part) and nano (fractional part, 10^-9)
  */
-export function moneyValueToNumber(money: MoneyValue): number {
-  return money.units + money.nano / 1_000_000_000;
+export function moneyValueToNumber(money: MoneyValue | number): number {
+  if (typeof money === 'number') {
+    return money;
+  }
+  return (money?.units ?? 0) + (money?.nano ?? 0) / 1_000_000_000;
 }
 
 /**
@@ -14,7 +17,7 @@ export function moneyValueToNumber(money: MoneyValue): number {
  * @param options Formatting options
  */
 export function formatMoneyValue(
-  money: MoneyValue,
+  money: MoneyValue | number,
   options?: {
     showCurrency?: boolean;
     decimals?: number;
@@ -27,7 +30,7 @@ export function formatMoneyValue(
     maximumFractionDigits: decimals,
   });
 
-  if (options?.showCurrency !== false && money.currency) {
+  if (options?.showCurrency !== false && typeof money !== 'number' && money?.currency) {
     const currencySymbol = getCurrencySymbol(money.currency);
     return `${currencySymbol}${formatted}`;
   }

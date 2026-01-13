@@ -5,27 +5,39 @@ import AuthGuard from "@/components/AuthGuard";
 import { Header, CosmicBackground } from "@/components/layout";
 import apiClient from "@/lib/api-client";
 import type { Instrument } from "@/types/api";
+import { useAppStore } from "@/store/appStore";
 
 export default function TradingSearchPage() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Instrument[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [error, setError] = useState("");
+
+  const { selectedApiClientId } = useAppStore();
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
     if (!query.trim()) return;
+
+    if (!selectedApiClientId) {
+      setError("Please select an API client in the settings before searching.");
+      return;
+    }
 
     setLoading(true);
     setSearched(true);
 
     try {
       const response = await apiClient.get("/instruments/search", {
-        params: { query },
+        params: { query, api_client_id: selectedApiClientId },
       });
       setResults(response.data.instruments || []);
     } catch (err) {
       console.error("Search error:", err);
+      setError("Failed to search instruments. Please try again.");
       setResults([]);
     } finally {
       setLoading(false);
@@ -52,6 +64,14 @@ export default function TradingSearchPage() {
 
             <div className="card">
               <form onSubmit={handleSearch} className="space-y-4">
+                {error && (
+                  <div className="bg-error/10 border border-error text-error px-4 py-3 rounded">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined">error</span>
+                      <span>{error}</span>
+                    </div>
+                  </div>
+                )}
                 <div className="flex gap-4">
                   <input
                     type="text"
@@ -60,7 +80,10 @@ export default function TradingSearchPage() {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                   />
-                  <button type="submit" className="btn-primary flex items-center gap-2">
+                  <button
+                    type="submit"
+                    className="btn-primary flex items-center gap-2"
+                  >
                     <span className="material-symbols-outlined">search</span>
                     <span>Search</span>
                   </button>

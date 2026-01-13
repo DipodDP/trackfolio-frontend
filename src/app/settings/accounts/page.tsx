@@ -6,6 +6,7 @@ import { useAppStore } from "@/store/appStore";
 import apiClient from "@/lib/api-client";
 import type { BrokerAccount, BrokerAccountsResponse } from "@/types/api";
 import AuthGuard from "@/components/AuthGuard";
+import { Header, CosmicBackground } from "@/components/layout";
 
 export default function AccountsPage() {
   return (
@@ -74,8 +75,9 @@ function AccountsPageContent() {
       return;
     }
 
-    // Save the selected API client ID and redirect to dashboard
+    // Save the selected API client ID and selected account IDs, then redirect to dashboard
     setSelectedApiClient(parseInt(clientId));
+    setSelectedAccountIds(selectedAccountIds);
     router.push("/dashboard");
   };
 
@@ -91,53 +93,69 @@ function AccountsPageContent() {
 
   if (!clientId) {
     return (
-      <div className="container-app py-8">
-        <div className="card p-8 text-center">
-          <h1 className="text-2xl font-display text-primary-text mb-4">
-            No API Client Selected
-          </h1>
-          <p className="text-secondary-text mb-6">
-            Please select an API client from the settings page.
-          </p>
-          <button
-            onClick={() => router.push("/settings/api-clients")}
-            className="btn btn-primary"
-          >
-            Go to API Clients
-          </button>
+      <AuthGuard>
+        <CosmicBackground />
+        <div className="grain-overlay" />
+
+        <div className="relative min-h-screen">
+          <Header />
+
+          <main className="container-app py-8">
+            <div className="card p-8 text-center">
+              <h1 className="text-2xl font-display text-primary-text mb-4">
+                No API Client Selected
+              </h1>
+              <p className="text-secondary-text mb-6">
+                Please select an API client from the settings page.
+              </p>
+              <button
+                onClick={() => router.push("/settings/api-clients")}
+                className="btn btn-primary"
+              >
+                Go to API Clients
+              </button>
+            </div>
+          </main>
         </div>
-      </div>
+      </AuthGuard>
     );
   }
 
   return (
-    <div className="container-app py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <button
-          onClick={() => router.push("/settings/api-clients")}
-          className="btn btn-ghost mb-4"
-        >
-          <span className="material-symbols-outlined">arrow_back</span>
-          Back to API Clients
-        </button>
+    <AuthGuard>
+      <CosmicBackground />
+      <div className="grain-overlay" />
 
-        <h1 className="text-4xl font-display text-primary-text mb-2">
-          Select Broker Accounts
-        </h1>
-        <p className="text-secondary-text">
-          Choose which accounts to include in your portfolio analysis
-        </p>
+      <div className="relative min-h-screen">
+        <Header />
 
-        {brokerType && (
-          <div className="flex gap-2 mt-4">
-            <span className="badge badge-neutral">{brokerType.toUpperCase()}</span>
-            <span className={`badge ${isSandbox ? "badge-warning" : "badge-success"}`}>
-              {isSandbox ? "Sandbox" : "Production"}
-            </span>
+        <main className="container-app py-8">
+          {/* Header */}
+          <div className="mb-8">
+            <button
+              onClick={() => router.push("/settings/api-clients")}
+              className="btn btn-ghost mb-4"
+            >
+              <span className="material-symbols-outlined">arrow_back</span>
+              Back to API Clients
+            </button>
+
+            <h1 className="text-4xl font-display text-primary-text mb-2">
+              Select Broker Accounts
+            </h1>
+            <p className="text-secondary-text">
+              Choose which accounts to include in your portfolio analysis
+            </p>
+
+            {brokerType && (
+              <div className="flex gap-2 mt-4">
+                <span className="badge badge-neutral">{brokerType.toUpperCase()}</span>
+                <span className={`badge ${isSandbox ? "badge-warning" : "badge-success"}`}>
+                  {isSandbox ? "Sandbox" : "Production"}
+                </span>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
       {/* Loading State */}
       {isLoading && (
@@ -249,7 +267,9 @@ function AccountsPageContent() {
           </button>
         </div>
       )}
-    </div>
+        </main>
+      </div>
+    </AuthGuard>
   );
 }
 

@@ -263,6 +263,32 @@
   .container-app {
     @apply container mx-auto px-4 sm:px-6 lg:px-8;
   }
+
+  /* Slider Styles */
+  .slider-thumb::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--color-coral);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .slider-thumb::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--color-coral);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .slider-thumb:hover::-webkit-slider-thumb {
+    background: var(--color-primary);
+  }
+  .slider-thumb:hover::-moz-range-thumb {
+    background: var(--color-primary);
+  }
 }
 
 @layer utilities {

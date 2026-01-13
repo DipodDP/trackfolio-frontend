@@ -7,6 +7,7 @@ import { Header, CosmicBackground } from "@/components/layout";
 import { Badge, Button } from "@/components/ui";
 import apiClient from "@/lib/api-client";
 import type { ApiClient } from "@/types/api";
+import { useAppStore } from "@/store/appStore";
 
 export default function ApiClientsPage() {
   const router = useRouter();
@@ -19,6 +20,8 @@ export default function ApiClientsPage() {
     is_sandbox: true,
   });
   const [error, setError] = useState("");
+
+  const { selectedApiClientId, setSelectedApiClient } = useAppStore();
 
   useEffect(() => {
     fetchClients();
@@ -60,6 +63,14 @@ export default function ApiClientsPage() {
       fetchClients();
     } catch (err) {
       console.error("Error deleting API client:", err);
+    }
+  };
+
+  const handleSelectClient = (id: number) => {
+    if (selectedApiClientId === id) {
+      setSelectedApiClient(null);
+    } else {
+      setSelectedApiClient(id);
     }
   };
 
@@ -182,7 +193,7 @@ export default function ApiClientsPage() {
             ) : (
               <div className="space-y-4">
                 {clients.map((client) => (
-                  <div key={client.id} className="card">
+                  <div key={client.id} className={`card ${selectedApiClientId === client.id ? "border-coral" : ""}`}>
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-4 flex-1">
                         <span className="material-symbols-outlined text-4xl text-primary">
@@ -202,7 +213,7 @@ export default function ApiClientsPage() {
                               ID: {client.id}
                             </span>
                           </div>
-                          <div className="mt-4">
+                          <div className="mt-4 flex gap-2">
                             <Button
                               onClick={() =>
                                 router.push(
@@ -218,6 +229,17 @@ export default function ApiClientsPage() {
                               }
                             >
                               View Accounts
+                            </Button>
+                            <Button
+                                onClick={() => handleSelectClient(client.id)}
+                                size="sm"
+                                variant={selectedApiClientId === client.id ? "primary" : "secondary"}
+                                className="flex items-center"
+                            >
+                                <span className="material-symbols-outlined">
+                                    check_circle
+                                </span>
+                                <span className="ml-2">{selectedApiClientId === client.id ? "Selected" : "Select"}</span>
                             </Button>
                           </div>
                         </div>

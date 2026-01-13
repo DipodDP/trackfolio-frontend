@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import { Header, CosmicBackground } from "@/components/layout";
@@ -36,6 +36,163 @@ export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isSandbox, setIsSandbox] = useState(true);
+
+  const {
+    totalPortfolio,
+    totalProfitLoss,
+    plPercentage,
+    positions,
+    recommendations,
+    allocationSegments,
+    legendItems,
+    totalCurrencies,
+  } = useMemo(() => {
+    if (!portfolioData) {
+      return {
+        totalPortfolio: 0,
+        totalProfitLoss: 0,
+        plPercentage: 0,
+        positions: [],
+        recommendations: [],
+        allocationSegments: { current: [], target: [] },
+        legendItems: [],
+        totalCurrencies: 0,
+      };
+    }
+
+    const {
+      consolidated_portfolio,
+      enriched_positions,
+      plan_positions,
+      structure_analysis,
+    } = portfolioData;
+
+    const totalPortfolio = moneyValueToNumber(
+      consolidated_portfolio.total_amount_portfolio
+    );
+
+    const totalProfitLoss = enriched_positions.reduce((sum, pos) => {
+      return sum + (pos.profit ? moneyValueToNumber(pos.profit) : 0);
+    }, 0);
+
+    const plPercentage =
+      totalPortfolio > 0 ? (totalProfitLoss / totalPortfolio) * 100 : 0;
+
+    const positions: Position[] = enriched_positions.slice(0, 5).map((pos) => {
+      const plan_pos = plan_positions.find((p) => p.figi === pos.figi);
+      return {
+        ticker: pos.ticker,
+        name: pos.name,
+        instrumentType: pos.instrument_type,
+        price: pos.current_price ? moneyValueToNumber(pos.current_price) : 0,
+        quantity: pos.quantity,
+        total: pos.total ? moneyValueToNumber(pos.total) : 0,
+        planTotal: plan_pos?.plan_total
+          ? moneyValueToNumber(plan_pos.plan_total)
+          : 0,
+        proportion: (pos.proportion_in_portfolio ?? 0) * 100,
+        profit: {
+          amount: pos.profit ? moneyValueToNumber(pos.profit) : 0,
+          percent: (pos.profit_fifo ?? 0) * 100,
+        },
+        targetProgress: plan_pos?.target_progress ?? 0,
+      };
+    });
+
+    const recommendations: Recommendation[] = plan_positions
+      .filter((pos) => pos.to_buy_lots !== 0)
+      .slice(0, 3)
+      .map((pos) => ({
+        action: pos.to_buy_lots > 0 ? "BUY" : "SELL",
+        ticker: pos.ticker,
+        quantity: Math.abs(pos.to_buy_lots),
+        reason:
+          pos.to_buy_lots > 0
+            ? `Target allocation: ${(
+                pos.plan_proportion_in_portfolio * 100
+              ).toFixed(1)}%`
+            : "Reduce position to target",
+        type: "rebalance" as const,
+      }));
+
+    const currentPlanStructure = structure_analysis.current_structure;
+    const targetPlanStructure = structure_analysis.plan_structure;
+
+    const allocationSegments = {
+      current: [
+        {
+          label: "Shares",
+          value: currentPlanStructure?.high_risk_part?.shares_proportion ?? 0,
+          color: "bg-primary",
+        },
+        {
+          label: "Bonds",
+          value:
+            currentPlanStructure?.low_risk_part?.corp_bonds_proportion ?? 0,
+          color: "bg-coral",
+        },
+        {
+          label: "ETFs",
+          value: currentPlanStructure?.high_risk_part?.etf_proportion ?? 0,
+          color: "bg-success",
+        },
+        {
+          label: "Gov Bonds",
+          value:
+            currentPlanStructure?.low_risk_part?.gov_bonds_proportion ?? 0,
+          color: "bg-warning",
+        },
+      ],
+      target: targetPlanStructure
+        ? [
+            {
+              label: "Shares",
+              value: targetPlanStructure?.high_risk_part?.shares_proportion ?? 0,
+              color: "bg-primary",
+            },
+            {
+              label: "Bonds",
+              value:
+                targetPlanStructure?.low_risk_part?.corp_bonds_proportion ??
+                0,
+              color: "bg-coral",
+            },
+            {
+              label: "ETFs",
+              value: targetPlanStructure?.high_risk_part?.etf_proportion ?? 0,
+              color: "bg-success",
+            },
+            {
+              label: "Gov Bonds",
+              value:
+                targetPlanStructure?.low_risk_part?.gov_bonds_proportion ??
+                0,
+              color: "bg-warning",
+            },
+          ]
+        : [],
+    };
+
+    const legendItems = allocationSegments.current.map((segment) => ({
+      label: segment.label,
+      color: segment.color,
+    }));
+    
+    const totalCurrencies = moneyValueToNumber(
+      consolidated_portfolio.total_amount_currencies
+    );
+
+    return {
+      totalPortfolio,
+      totalProfitLoss,
+      plPercentage,
+      positions,
+      recommendations,
+      allocationSegments,
+      legendItems,
+      totalCurrencies,
+    };
+  }, [portfolioData]);
 
   const fetchPortfolioData = async () => {
     if (!selectedApiClientId || selectedAccountIds.length === 0) {
@@ -198,95 +355,6 @@ export default function DashboardPage() {
     return null;
   }
 
-  // Transform API data to component format
-  const { consolidated_portfolio, enriched_positions, plan_positions } =
-    portfolioData;
-
-  const totalPortfolio = moneyValueToNumber(
-    consolidated_portfolio.total_amount_portfolio
-  );
-  const totalShares = moneyValueToNumber(
-    consolidated_portfolio.total_amount_shares
-  );
-  const totalBonds = moneyValueToNumber(
-    consolidated_portfolio.total_amount_bonds
-  );
-  const totalEtf = moneyValueToNumber(consolidated_portfolio.total_amount_etf);
-  const totalCurrencies = moneyValueToNumber(
-    consolidated_portfolio.total_amount_currencies
-  );
-
-  // Calculate total P/L from enriched positions
-  const totalProfitLoss = enriched_positions.reduce((sum, pos) => {
-    return sum + pos.profit;
-  }, 0);
-  const plPercentage = totalPortfolio > 0 ? (totalProfitLoss / totalPortfolio) * 100 : 0;
-
-  // Convert enriched positions to Position type
-  const positions: Position[] = enriched_positions.slice(0, 5).map((pos) => ({
-    ticker: pos.ticker,
-    name: pos.name,
-    instrumentType: pos.instrument_type,
-    price: moneyValueToNumber(pos.current_price),
-    quantity: pos.quantity,
-    total: moneyValueToNumber(pos.total),
-    planTotal: 0, // Would need to join with plan_positions
-    proportion: pos.proportion_in_portfolio * 100,
-    profit: {
-      amount: pos.profit,
-      percent: pos.profit_fifo,
-    },
-    targetProgress: 0, // Would need target data
-  }));
-
-  // Convert plan positions to recommendations
-  const recommendations: Recommendation[] = plan_positions
-    .filter((pos) => pos.to_buy_lots !== 0)
-    .slice(0, 3)
-    .map((pos) => ({
-      action: pos.to_buy_lots > 0 ? "BUY" : "SELL",
-      ticker: pos.ticker,
-      quantity: Math.abs(pos.to_buy_lots),
-      reason:
-        pos.to_buy_lots > 0
-          ? `Target allocation: ${(pos.plan_proportion_in_portfolio * 100).toFixed(1)}%`
-          : "Reduce position to target",
-      type: "rebalance" as const,
-    }));
-
-  // Calculate allocation segments
-  const totalAssets = totalShares + totalBonds + totalEtf + totalCurrencies;
-  const allocationSegments = {
-    current: [
-      {
-        label: "Shares",
-        value: totalAssets > 0 ? (totalShares / totalAssets) * 100 : 0,
-        color: "bg-primary",
-      },
-      {
-        label: "Bonds",
-        value: totalAssets > 0 ? (totalBonds / totalAssets) * 100 : 0,
-        color: "bg-coral",
-      },
-      {
-        label: "ETFs",
-        value: totalAssets > 0 ? (totalEtf / totalAssets) * 100 : 0,
-        color: "bg-success",
-      },
-      {
-        label: "Cash",
-        value: totalAssets > 0 ? (totalCurrencies / totalAssets) * 100 : 0,
-        color: "bg-warning",
-      },
-    ],
-    target: [],
-  };
-
-  const legendItems = allocationSegments.current.map((segment) => ({
-    label: segment.label,
-    color: segment.color,
-  }));
-
   return (
     <AuthGuard>
       <CosmicBackground />
@@ -307,7 +375,7 @@ export default function DashboardPage() {
             <StatCard
               title="Total Portfolio Value"
               value={formatMoneyValue(
-                consolidated_portfolio.total_amount_portfolio,
+                portfolioData.consolidated_portfolio.total_amount_portfolio,
                 { decimals: 2 }
               )}
               change={{
@@ -321,7 +389,7 @@ export default function DashboardPage() {
               title="Unrealized P/L"
               value={`${totalProfitLoss >= 0 ? "+" : ""}${formatMoneyValue(
                 {
-                  currency: consolidated_portfolio.total_amount_portfolio.currency,
+                  currency: portfolioData.consolidated_portfolio.total_amount_portfolio.currency,
                   units: Math.floor(totalProfitLoss),
                   nano: Math.round(
                     (totalProfitLoss - Math.floor(totalProfitLoss)) * 1_000_000_000
@@ -339,10 +407,10 @@ export default function DashboardPage() {
             <StatCard
               title="Available Cash"
               value={formatMoneyValue(
-                consolidated_portfolio.total_amount_currencies,
+                portfolioData.consolidated_portfolio.total_amount_currencies,
                 { decimals: 2 }
               )}
-              subtitle={`${((totalCurrencies / totalPortfolio) * 100).toFixed(1)}% of Portfolio`}
+              subtitle={`${totalPortfolio === 0 ? "0.0%" : ((totalCurrencies / totalPortfolio) * 100).toFixed(1)}% of Portfolio`}
               accentColor="coral"
             />
           </div>
@@ -361,6 +429,12 @@ export default function DashboardPage() {
                     label="Current Allocation"
                     segments={allocationSegments.current}
                   />
+                  {allocationSegments.target.length > 0 && (
+                    <AllocationBar
+                      label="Target Allocation"
+                      segments={allocationSegments.target}
+                    />
+                  )}
                 </div>
                 <AllocationLegend items={legendItems} />
               </Card>
