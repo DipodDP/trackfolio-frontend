@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, Manrope } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const bebasNeue = Bebas_Neue({
@@ -36,6 +37,12 @@ export default function RootLayout({
       >
         <div className="grain-overlay" />
         {children}
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton
+          theme="dark"
+        />
       </body>
     </html>
   );

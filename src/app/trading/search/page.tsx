@@ -6,6 +6,10 @@ import { Header, CosmicBackground } from "@/components/layout";
 import apiClient from "@/lib/api-client";
 import type { Instrument } from "@/types/api";
 import { useAppStore } from "@/store/appStore";
+import {
+  OrderDialog,
+  OrderInstrumentData,
+} from "@/components/trading/OrderDialog";
 
 export default function TradingSearchPage() {
   const [query, setQuery] = useState("");
@@ -13,6 +17,9 @@ export default function TradingSearchPage() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState("");
+  const [selectedInstrument, setSelectedInstrument] =
+    useState<OrderInstrumentData | null>(null);
+  const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
 
   const { selectedApiClientId } = useAppStore();
 
@@ -42,6 +49,27 @@ export default function TradingSearchPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleBuyClick = (instrument: Instrument) => {
+    // Convert Instrument to OrderInstrumentData
+    const instrumentData: OrderInstrumentData = {
+      figi: instrument.figi,
+      ticker: instrument.ticker,
+      name: instrument.name,
+      currency: instrument.currency,
+      // Note: We don't have current price from search,
+      // so the dialog won't show estimated total
+      currentPrice: null,
+    };
+
+    setSelectedInstrument(instrumentData);
+    setIsOrderDialogOpen(true);
+  };
+
+  const handleOrderSuccess = () => {
+    // Optionally navigate to positions page or show success message
+    // For now, just close the dialog (toast will show success)
   };
 
   return (
@@ -115,7 +143,10 @@ export default function TradingSearchPage() {
             {results.length > 0 && (
               <div className="space-y-4">
                 {results.map((instrument) => (
-                  <div key={instrument.figi} className="card hover:border-coral transition-colors">
+                  <div
+                    key={instrument.figi}
+                    className="card hover:border-coral transition-colors"
+                  >
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-3 mb-2">
@@ -135,17 +166,31 @@ export default function TradingSearchPage() {
                           <span>Lot: {instrument.lot}</span>
                         </div>
                       </div>
-                      <a
-                        href={`/trading/execute?figi=${instrument.figi}`}
+                      <button
+                        onClick={() => handleBuyClick(instrument)}
                         className="btn-primary flex items-center gap-2"
                       >
-                        <span className="material-symbols-outlined">trending_up</span>
-                        <span>Trade</span>
-                      </a>
+                        <span className="material-symbols-outlined">
+                          trending_up
+                        </span>
+                        <span>Buy</span>
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
+            )}
+
+            {/* Order Dialog */}
+            {selectedInstrument && (
+              <OrderDialog
+                open={isOrderDialogOpen}
+                onOpenChange={setIsOrderDialogOpen}
+                instrument={selectedInstrument}
+                orderType="BUY"
+                recommendedLots={1}
+                onSuccess={handleOrderSuccess}
+              />
             )}
           </div>
         </main>

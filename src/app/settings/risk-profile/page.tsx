@@ -53,11 +53,11 @@ function RiskProfilePageContent() {
         if (response.data) {
           const fetchedData = response.data;
           setFormData({
-            risk_profile: fetchedData.risk_profile,
-            max_risk_part_drawdown: fetchedData.max_risk_part_drawdown,
-            risk_proportion: fetchedData.risk_proportion,
-            corp_bonds_proportion: fetchedData.corp_bonds_proportion,
-            shares_proportion: fetchedData.shares_proportion,
+            risk_profile: fetchedData.risk_profile * 100,
+            max_risk_part_drawdown: fetchedData.max_risk_part_drawdown * 100,
+            risk_proportion: (fetchedData.risk_proportion || 0) * 100,
+            corp_bonds_proportion: fetchedData.corp_bonds_proportion * 100,
+            shares_proportion: fetchedData.shares_proportion * 100,
           });
           setExistingStructure(fetchedData);
         }
@@ -92,11 +92,6 @@ function RiskProfilePageContent() {
       return "Shares proportion must be between 0% and 100%.";
     }
 
-    // Validate risk proportion
-    if (formData.risk_proportion < 10 || formData.risk_proportion > 90) {
-      return "Risk proportion must be between 10% and 90%.";
-    }
-
     // Validate drawdown
     if (formData.max_risk_part_drawdown < 5 || formData.max_risk_part_drawdown > 50) {
       return "Max drawdown must be between 5% and 50%.";
@@ -122,7 +117,10 @@ function RiskProfilePageContent() {
     try {
       let response;
       const payload = {
-        ...formData,
+        risk_profile: formData.risk_profile / 100,
+        max_risk_part_drawdown: formData.max_risk_part_drawdown / 100,
+        corp_bonds_proportion: formData.corp_bonds_proportion / 100,
+        shares_proportion: formData.shares_proportion / 100,
       };
 
       if (existingStructure) {
@@ -141,7 +139,9 @@ function RiskProfilePageContent() {
       setExistingStructure(response.data);
       setSuccess("Risk profile saved successfully!");
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Failed to save risk profile.");
+      setError(
+        JSON.stringify(err.response?.data?.detail) || "Failed to save profile."
+      );
     } finally {
       setIsSaving(false);
     }
@@ -225,17 +225,20 @@ function RiskProfilePageContent() {
                       maxLabel="50%"
                     />
                     
-                    <Slider
-                      label="Proportion of Risky Assets"
-                      value={formData.risk_proportion}
-                      onChange={(e) => handleChange("risk_proportion", e.target.value)}
-                      min="10"
-                      max="90"
-                      step="1"
-                      valueLabel={`${formData.risk_proportion}%`}
-                      minLabel="10%"
-                      maxLabel="90%"
-                    />
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium text-primary-text">
+                        Proportion of Risky Assets
+                        <span
+                          className="material-symbols-outlined text-base text-secondary-text ml-1.5"
+                          title="This value is calculated automatically from your Risk Profile and Max Drawdown settings."
+                        >
+                          info
+                        </span>
+                      </label>
+                      <div className="flex items-center justify-center h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                        {formData.risk_proportion.toFixed(2)}%
+                      </div>
+                    </div>
                     
                     <div className="space-y-2">
                       <Slider
