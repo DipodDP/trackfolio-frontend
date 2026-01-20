@@ -21,14 +21,14 @@ export function RecommendationCard({ recommendation, onClick }: RecommendationCa
 
   return (
     <div
-      className="p-4 rounded-lg border border-border-dark bg-background-dark min-h-[120px] flex flex-col justify-between cursor-pointer hover:border-coral transition-colors"
+      className="p-4 rounded-lg border border-border bg-card min-h-[120px] flex flex-col justify-between cursor-pointer hover:border-coral transition-colors shadow-sm"
       onClick={onClick}
     >
       <Badge variant={isBuy ? "success" : "error"}>{action}</Badge>
       <div>
-        <p className="text-lg font-bold mt-2 text-primary-text">{ticker}</p>
-        <p className="text-xs text-secondary-text mt-1 mb-1.5">
-          <span className="font-semibold text-primary-text">
+        <p className="text-lg font-bold mt-2 text-text-primary">{ticker}</p>
+        <p className="text-xs text-text-secondary mt-1 mb-1.5">
+          <span className="font-semibold text-text-primary">
             Qty: {isBuy ? "+" : "-"}
             {Math.abs(quantity)}
           </span>
@@ -58,7 +58,7 @@ export function RecommendationsGrid({
 }: RecommendationsGridProps) {
   if (recommendations.length === 0) {
     return (
-      <div className="text-center py-8 text-secondary-text">
+      <div className="text-center py-8 text-text-secondary">
         <span className="material-symbols-outlined text-3xl mb-2 block">
           check_circle
         </span>

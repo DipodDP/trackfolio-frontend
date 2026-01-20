@@ -4,8 +4,10 @@ import type { Metadata } from "next";
 import { Bebas_Neue, Manrope } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; // Import QueryClient and QueryClientProvider
-import React, { useState } from 'react'; // Import useState
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { useTheme } from "next-themes";
 
 const bebasNeue = Bebas_Neue({
   weight: "400",
@@ -20,15 +22,28 @@ const manrope = Manrope({
 
 
 
+// Themed Toaster Component
+function ThemedToaster() {
+  const { resolvedTheme } = useTheme();
+  return (
+    <Toaster
+      position="top-right"
+      richColors
+      closeButton
+      theme={resolvedTheme as "light" | "dark"}
+    />
+  );
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [queryClient] = useState(() => new QueryClient()); // Instantiate QueryClient
+  const [queryClient] = useState(() => new QueryClient());
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
@@ -38,16 +53,13 @@ export default function RootLayout({
       <body
         className={`${bebasNeue.variable} ${manrope.variable} antialiased`}
       >
-        <div className="grain-overlay" />
-        <QueryClientProvider client={queryClient}> {/* Wrap children with QueryClientProvider */}
-          {children}
-        </QueryClientProvider>
-        <Toaster
-          position="top-right"
-          richColors
-          closeButton
-          theme="dark"
-        />
+        <ThemeProvider>
+          <div className="grain-overlay" />
+          <QueryClientProvider client={queryClient}>
+            {children}
+          </QueryClientProvider>
+          <ThemedToaster />
+        </ThemeProvider>
       </body>
     </html>
   );

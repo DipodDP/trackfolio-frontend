@@ -10,21 +10,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Theme-aware CSS variables
+        background: "var(--background)",
+        card: "var(--card)",
+        border: "var(--border)",
+        "text-primary": "var(--text-primary)",
+        "text-secondary": "var(--text-secondary)",
+
         // Primary Colors (Style Guide v1.1.0)
         primary: "#D72C2C",
         "primary-hover": "#B52424",
         "primary-active": "#8A1A1F",
-        "primary-text": "#F2E3C2",
-
-        // Secondary Colors
-        "secondary-text": "#A9A9B4",
-        "pale-yellow": "#F9E3BA",
-
-        // Background Colors
-        "background-dark": "#121828",
-        "background-deeper": "#0A0F28",
-        "card-dark": "#1A2238",
-        "border-dark": "#3A4466",
 
         // Accent Colors
         coral: "#E86854",
@@ -35,6 +31,14 @@ const config: Config = {
         warning: "#FFC107",
         error: "#D8232A",
         info: "#2196F3",
+
+        // Legacy aliases for backward compatibility
+        "primary-text": "var(--text-primary)",
+        "secondary-text": "var(--text-secondary)",
+        "background-dark": "var(--background)",
+        "card-dark": "var(--card)",
+        "border-dark": "var(--border)",
+        "pale-yellow": "#F9E3BA",
       },
       fontFamily: {
         display: ["var(--font-bebas-neue)", "Bebas Neue", "sans-serif"],

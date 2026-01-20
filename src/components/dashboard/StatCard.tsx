@@ -28,14 +28,14 @@ export function StatCard({
 }: StatCardProps) {
   return (
     <div
-      className={`bg-card-dark rounded-lg p-2 sm:p-4 border-l-4 ${accentColorClasses[accentColor]} hover:border-coral transition-colors duration-300`}
+      className={`bg-card rounded-lg p-2 sm:p-4 border-l-4 ${accentColorClasses[accentColor]} hover:border-coral transition-colors duration-300 shadow-sm border border-border`}
     >
       <div className="flex justify-between items-start mb-0.5 sm:mb-1">
         <div className="flex-1">
-          <h3 className="text-[10px] sm:text-sm text-secondary-text uppercase tracking-wider">
+          <h3 className="text-[10px] sm:text-sm text-text-secondary uppercase tracking-wider">
             {title}
           </h3>
-          <p className="text-lg sm:text-3xl font-semibold text-primary-text mt-0.5 sm:mt-1">
+          <p className="text-lg sm:text-3xl font-semibold text-text-primary mt-0.5 sm:mt-1">
             {value}
             {change && (
               <span
@@ -49,13 +49,13 @@ export function StatCard({
             )}
           </p>
           {subtitle && (
-            <p className="text-[10px] sm:text-sm text-secondary-text mt-0.5 sm:mt-1">{subtitle}</p>
+            <p className="text-[10px] sm:text-sm text-text-secondary mt-0.5 sm:mt-1">{subtitle}</p>
           )}
         </div>
         {icon && (
           <span
             className={`material-symbols-outlined text-sm sm:text-3xl ${
-              change?.isPositive ? "text-success" : "text-secondary-text"
+              change?.isPositive ? "text-success" : "text-text-secondary"
             }`}
           >
             {icon}

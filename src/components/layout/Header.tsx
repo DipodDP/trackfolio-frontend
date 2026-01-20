@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import apiClient from "@/lib/api-client";
 import { Button } from "@/components/ui";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
@@ -75,6 +76,9 @@ export function Header({ isSandbox = false, onToggleSandbox, userName }: HeaderP
 
           {/* Actions */}
           <div className="flex items-center space-x-4">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
             {/* Sandbox Toggle */}
             {onToggleSandbox && (
               <button

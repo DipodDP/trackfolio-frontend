@@ -4,23 +4,35 @@
 
 @layer base {
   :root {
-    /* CSS Variables for theming */
+    /* Light Theme (default) */
+    --background: #F9FAFB;
+    --card: #FFFFFF;
+    --border: #E5E7EB;
+    --text-primary: #1F2937;
+    --text-secondary: #6B7280;
+
+    /* Accent colors (same for both themes) */
     --color-primary: #D72C2C;
     --color-primary-hover: #B52424;
-    --color-primary-text: #F2E3C2;
-    --color-secondary-text: #A9A9B4;
-    --color-background-dark: #121828;
-    --color-background-deeper: #0A0F28;
-    --color-card-dark: #1A2238;
-    --color-border-dark: #3A4466;
     --color-coral: #E86854;
     --color-success: #4CAF50;
     --color-warning: #FFC107;
     --color-error: #D8232A;
   }
 
+  .dark {
+    /* Dark Theme */
+    --background: #121828;
+    --card: #1A2238;
+    --border: #3A4466;
+    --text-primary: #F2E3C2;
+    --text-secondary: #A9A9B4;
+  }
+
   body {
-    @apply bg-background-dark text-primary-text font-body;
+    background-color: var(--background);
+    color: var(--text-primary);
+    @apply font-body;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -31,7 +43,8 @@
 
   /* Focus styles for accessibility */
   :focus-visible {
-    @apply outline-none ring-2 ring-coral ring-offset-2 ring-offset-background-dark;
+    @apply outline-none ring-2 ring-coral ring-offset-2;
+    ring-offset-color: var(--background);
   }
 }
 
@@ -49,29 +62,52 @@
   }
 
   .btn-primary {
-    @apply btn px-6 py-3 bg-primary text-primary-text hover:bg-primary-hover active:bg-primary-active shadow-rocket;
-    @apply focus:ring-2 focus:ring-coral focus:ring-offset-2 focus:ring-offset-background-dark;
+    @apply btn px-6 py-3 bg-primary hover:bg-primary-hover active:bg-primary-active shadow-rocket;
+    @apply focus:ring-2 focus:ring-coral focus:ring-offset-2;
+    color: var(--text-primary);
+    ring-offset-color: var(--background);
   }
 
   .btn-secondary {
     @apply btn px-6 py-3 bg-transparent border-2 border-coral text-coral;
-    @apply hover:bg-coral hover:text-background-dark;
-    @apply focus:ring-2 focus:ring-coral focus:ring-offset-2 focus:ring-offset-background-dark;
+    @apply focus:ring-2 focus:ring-coral focus:ring-offset-2;
+    ring-offset-color: var(--background);
+  }
+
+  .btn-secondary:hover {
+    @apply bg-coral;
+    color: var(--background);
   }
 
   .btn-ghost {
-    @apply btn px-6 py-3 bg-transparent text-primary-text;
-    @apply hover:bg-primary-text/10;
+    @apply btn px-6 py-3 bg-transparent;
+    color: var(--text-primary);
+  }
+
+  .btn-ghost:hover {
+    background-color: rgba(128, 128, 128, 0.1);
   }
 
   .btn-outline {
-    @apply btn px-6 py-3 bg-transparent border-2 border-border-dark text-secondary-text;
-    @apply hover:bg-border-dark hover:text-primary-text;
+    @apply btn px-6 py-3 bg-transparent border-2;
+    border-color: var(--border);
+    color: var(--text-secondary);
+  }
+
+  .btn-outline:hover {
+    background-color: var(--border);
+    color: var(--text-primary);
   }
 
   .btn-icon {
-    @apply w-10 h-10 rounded-lg bg-primary-text/10 text-primary-text flex items-center justify-center;
-    @apply hover:bg-coral hover:text-background-dark transition-colors duration-fast;
+    @apply w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-fast;
+    background-color: rgba(128, 128, 128, 0.1);
+    color: var(--text-primary);
+  }
+
+  .btn-icon:hover {
+    background-color: var(--color-coral);
+    color: var(--background);
   }
 
   /* Button Sizes */
@@ -85,12 +121,15 @@
 
   /* Card Variants */
   .card {
-    @apply bg-card-dark border border-border-dark/20 rounded-xl p-6 shadow-lg;
+    @apply rounded-xl p-6 shadow-lg;
+    background-color: var(--card);
+    border: 1px solid var(--border);
   }
 
   .card-accent {
-    @apply bg-card-dark rounded-lg p-4 border-l-4 border-primary;
+    @apply rounded-lg p-4 border-l-4 border-primary;
     @apply hover:border-coral transition-colors duration-normal;
+    background-color: var(--card);
   }
 
   .card-interactive {
@@ -99,9 +138,15 @@
 
   /* Input Fields */
   .input {
-    @apply w-full px-4 py-3 bg-background-deeper border-2 border-secondary-text/30 rounded-lg;
-    @apply text-primary-text placeholder:text-secondary-text;
-    @apply focus:border-coral focus:ring-2 focus:ring-coral/20 transition-all duration-fast outline-none;
+    @apply w-full px-4 py-3 border-2 rounded-lg transition-all duration-fast outline-none;
+    @apply focus:border-coral focus:ring-2 focus:ring-coral/20;
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--text-primary);
+  }
+
+  .input::placeholder {
+    color: var(--text-secondary);
   }
 
   .input-error {
@@ -126,19 +171,28 @@
   }
 
   .table thead {
-    @apply border-b border-border-dark;
+    border-bottom: 1px solid var(--border);
   }
 
   .table th {
-    @apply font-bold pb-2 pr-4 text-secondary-text text-left;
+    @apply font-bold pb-2 pr-4 text-left;
+    color: var(--text-secondary);
   }
 
   .table tbody {
-    @apply divide-y divide-border-dark/50;
+    @apply divide-y;
+  }
+
+  .table tbody tr {
+    border-color: var(--border);
   }
 
   .table tr {
-    @apply hover:bg-background-dark transition-colors duration-fast;
+    @apply transition-colors duration-fast;
+  }
+
+  .table tr:hover {
+    background-color: rgba(128, 128, 128, 0.05);
   }
 
   .table td {
@@ -171,12 +225,15 @@
   }
 
   .badge-neutral {
-    @apply badge bg-secondary-text/20 text-secondary-text;
+    @apply badge text-text-secondary;
+    background-color: rgba(128, 128, 128, 0.2);
   }
 
   /* Progress Bar */
   .progress {
-    @apply h-3 border border-border-dark rounded-full w-full bg-background-dark/50 overflow-hidden;
+    @apply h-3 border rounded-full w-full overflow-hidden;
+    border-color: var(--border);
+    background-color: rgba(var(--background), 0.5);
   }
 
   .progress-bar {
@@ -185,26 +242,44 @@
 
   /* Glass Effect */
   .glass {
-    @apply bg-background-dark/80 backdrop-blur-sm;
+    @apply backdrop-blur-sm;
+    background-color: rgb(from var(--background) r g b / 0.8);
+  }
+
+  @supports not (color: rgb(from white r g b)) {
+    .glass {
+      background-color: rgba(249, 250, 251, 0.8);
+    }
+
+    .dark .glass {
+      background-color: rgba(18, 24, 40, 0.8);
+    }
   }
 
   /* Header Styles */
   .header {
-    @apply sticky top-0 z-50 glass border-b border-border-dark;
+    @apply sticky top-0 z-50 glass border-b;
+    border-color: var(--border);
   }
 
   /* Navigation Tabs */
   .nav-link {
-    @apply text-sm font-medium text-secondary-text hover:text-primary-text transition-colors duration-fast;
+    @apply text-sm font-medium transition-colors duration-fast;
+    color: var(--text-secondary);
+  }
+
+  .nav-link:hover {
+    color: var(--text-primary);
   }
 
   .nav-link-active {
-    @apply text-primary-text;
+    color: var(--text-primary);
   }
 
   /* Decorative Elements */
   .star {
-    @apply absolute bg-primary-text opacity-60;
+    @apply absolute opacity-60;
+    background-color: var(--text-primary);
     clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
   }
 
@@ -220,7 +295,8 @@
 
   /* Skewed Background */
   .skewed-bg {
-    @apply absolute inset-0 -skew-y-3 bg-card-dark/50;
+    @apply absolute inset-0 -skew-y-3;
+    background-color: rgba(26, 34, 56, 0.5);
   }
 
   /* Material Symbols Icon Styles */
@@ -234,7 +310,8 @@
 
   /* Loading Skeleton */
   .skeleton {
-    @apply bg-border-dark/50 animate-pulse rounded;
+    @apply animate-pulse rounded;
+    background-color: rgba(var(--border), 0.5);
   }
 
   /* Scrollbar Styles */
@@ -243,11 +320,16 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-background-dark;
+    background-color: var(--background);
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-border-dark rounded-full hover:bg-secondary-text;
+    @apply rounded-full;
+    background-color: var(--border);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-secondary);
   }
 
   /* Text Colors for Values */
