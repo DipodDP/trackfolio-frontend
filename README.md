@@ -65,6 +65,34 @@ Start production server:
 pnpm start
 ```
 
+## Testing
+
+### Unit Tests
+```bash
+pnpm test
+```
+
+### E2E Tests
+
+End-to-end tests require a running production server.
+
+**Quick Start:**
+```bash
+# Terminal 1: Start server
+pnpm run build && pnpm run start
+
+# Terminal 2: Run tests
+pnpm test:e2e
+```
+
+See [tests/e2e/README.md](./tests/e2e/README.md) for detailed testing guide, debugging options, and CI/CD setup.
+
+**Available E2E commands:**
+- `pnpm test:e2e` - Run all E2E tests
+- `pnpm test:e2e:ui` - Run in interactive UI mode
+- `pnpm test:e2e:headed` - Run with visible browser
+- `pnpm test:e2e:debug` - Debug mode with inspector
+
 ## Project Structure
 
 ```

@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "jsx": "react",
+    "types": ["jest", "node"]
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.d.ts",
+    "jest.setup.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next",
+    "out",
+    "build"
+  ]
+}
