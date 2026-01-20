@@ -1,4 +1,4 @@
-import { MoneyValue, EnrichedPosition, PlanPosition } from "./api";
+import { MoneyValue, EnrichedPosition, PlanPosition } from "./portfolio";
 
 /**
  * Table position type - combines enriched position data with plan position data

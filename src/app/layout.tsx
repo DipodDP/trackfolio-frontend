@@ -1,7 +1,11 @@
+"use client";
+
 import type { Metadata } from "next";
 import { Bebas_Neue, Manrope } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; // Import QueryClient and QueryClientProvider
+import React, { useState } from 'react'; // Import useState
 
 const bebasNeue = Bebas_Neue({
   weight: "400",
@@ -14,16 +18,15 @@ const manrope = Manrope({
   variable: "--font-manrope",
 });
 
-export const metadata: Metadata = {
-  title: "Trackfolio - Portfolio Tracking & Analysis",
-  description: "Investment portfolio tracking and sandbox trading analysis",
-};
+
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [queryClient] = useState(() => new QueryClient()); // Instantiate QueryClient
+
   return (
     <html lang="en" className="dark">
       <head>
@@ -36,7 +39,9 @@ export default function RootLayout({
         className={`${bebasNeue.variable} ${manrope.variable} antialiased`}
       >
         <div className="grain-overlay" />
-        {children}
+        <QueryClientProvider client={queryClient}> {/* Wrap children with QueryClientProvider */}
+          {children}
+        </QueryClientProvider>
         <Toaster
           position="top-right"
           richColors

@@ -16,7 +16,7 @@ import { formatMoneyValue, moneyValueToNumber } from "@/lib/utils/money";
 import { placeMarketOrder } from "@/lib/api/orders";
 import { useAppStore } from "@/store/appStore";
 import { toast } from "sonner";
-import type { MoneyValue } from "@/types/api";
+import type { MoneyValue } from "@/types/portfolio";
 
 /**
  * Generic instrument data for orders
@@ -25,7 +25,7 @@ export interface OrderInstrumentData {
   figi: string;
   ticker: string;
   name: string;
-  currentPrice?: MoneyValue | null;
+  currentPrice?: number | null;
   currency?: string;
 }
 
@@ -52,9 +52,7 @@ export function OrderDialog({
   const [error, setError] = useState<string | null>(null);
 
   // Calculate estimated total if price is available
-  const currentPrice = instrument.currentPrice
-    ? moneyValueToNumber(instrument.currentPrice)
-    : null;
+  const currentPrice = instrument.currentPrice ?? null;
 
   const estimatedTotal = useMemo(() => {
     if (!currentPrice) return null;
@@ -181,7 +179,10 @@ export function OrderDialog({
                 Current Price
               </label>
               <div className="text-lg font-semibold text-primary-text">
-                {formatMoneyValue(instrument.currentPrice, { decimals: 2 })}
+                {formatMoneyValue(instrument.currentPrice, {
+                  decimals: 2,
+                  currency: instrument.currency,
+                })}
               </div>
             </div>
           )}
@@ -230,14 +231,10 @@ export function OrderDialog({
               </label>
               <div className="text-xl font-bold text-primary">
                 ≈{" "}
-                {formatMoneyValue(
-                  {
-                    units: Math.floor(estimatedTotal),
-                    nano: Math.floor((estimatedTotal % 1) * 1_000_000_000),
-                    currency: instrument.currentPrice.currency,
-                  },
-                  { decimals: 2 }
-                )}
+                {formatMoneyValue(estimatedTotal, {
+                  decimals: 2,
+                  currency: instrument.currency,
+                })}
               </div>
             </div>
           )}

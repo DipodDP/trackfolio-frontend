@@ -237,7 +237,7 @@ export default function ApiClientsPage() {
                                 className="flex items-center"
                             >
                                 <span className="material-symbols-outlined">
-                                    check_circle
+                                    {selectedApiClientId === client.id ? "radio_button_checked" : "radio_button_unchecked"}
                                 </span>
                                 <span className="ml-2">{selectedApiClientId === client.id ? "Selected" : "Select"}</span>
                             </Button>

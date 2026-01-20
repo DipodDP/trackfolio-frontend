@@ -12,10 +12,12 @@
 
 To get started with the project, follow these documents in order:
 
-1.  **[01_overview_and_goals.md](./01_overview_and_goals.md)**: Understand the project's high-level vision and objectives.
-2.  **[02_project_setup.md](./02_project_setup.md)**: Set up your local development environment.
-3.  **[03_app_creation.md](./03_app_creation.md)**: Create the initial application scaffold.
-4.  **[05_design_system_integration.md](./05_design_system_integration.md)**: Configure the project's styling and visual theme.
+1.  **[00_introduction.md](./00_introduction.md)**: Understand the project's context and high-level goals.
+2.  **[01_overview_and_goals.md](./01_overview_and_goals.md)**: Internalize the project's vision and objectives.
+3.  **[02_project_setup.md](./02_project_setup.md)**: Set up your local development environment.
+4.  **[03_app_creation.md](./03_app_creation.md)**: Create the initial application scaffold.
+
+After onboarding, refer to **[CONTEXT.md](./CONTEXT.md)** for a live snapshot of the project's implementation status.
 
 ---
 
@@ -23,12 +25,14 @@ To get started with the project, follow these documents in order:
 
 This section describes the foundational architecture of the frontend application. **Read these documents before implementing new features.**
 
+⚠️ **Note**: Many of these documents describe the **planned architecture**. For the actual implementation status, always cross-reference with **[CONTEXT.md](./CONTEXT.md)**.
+
 *   **Routing and Page Structure**: For information on the application's page hierarchy and how pages map to backend endpoints, see **[04_page_routing.md](./04_page_routing.md)**.
 
-*   **State Management and Data Flow**: To understand how data is managed, refer to **[08_ui_state_and_data_flow.md](./08_ui_state_and_data_flow.md)**. It defines our three categories of state and the tools for each:
-    *   **Server State**: React Query (`@tanstack/react-query`)
-    *   **Global UI State**: Zustand
-    *   **Local UI State**: React Hooks (`useState`, `useReducer`)
+*   **State Management and Data Flow**: To understand how data is managed, refer to **[08_ui_state_and_data_flow.md](./08_ui_state_and_data_flow.md)**. It defines our three categories of state and the tools for each (React Query, Zustand, React Hooks).
+    *   *Status: Plan only. Libraries are not yet configured.*
+
+*   **Design System**: The setup for the "Cosmic Frontier" theme, including Tailwind CSS configuration, fonts, and global styles, is in **[05_design_system_integration.md](./05_design_system_integration.md)**.
 
 ---
 
@@ -38,15 +42,18 @@ This section contains the most critical information for ensuring the frontend co
 
 *   **API Contracts (Source of Truth)**: For all API endpoint definitions, request payloads, and response schemas, refer to **[06_backend_interface_contracts.md](./06_backend_interface_contracts.md)**. This is the definitive source of truth for all data structures.
 
-*   **Authentication Lifecycle**: The complete user authentication flow is detailed in **[09_auth_flow.md](./09_auth_flow.md)**. It covers the two-token strategy (`access_token` and `refresh_token`), login/logout procedures, and route protection. **Read this before implementing any user-facing protected features.**
+*   **Authentication Lifecycle**: The complete user authentication flow is detailed in **[09_auth_flow.md](./09_auth_flow.md)**. It covers the two-token strategy, login/logout procedures, and route protection.
+    *   *Status: Partially implemented. Uses `sessionStorage` and a client-side `AuthGuard`.*
 
-*   **API Client Implementation**: For a step-by-step guide on setting up the API client, mocking data, and handling `snake_case` to `camelCase` transformation, see **[07_new_backend_integration.md](./07_new_backend_integration.md)**.
+*   **API Client Implementation**: For a step-by-step guide on setting up the API client, mocking data, and handling data transformation, see **[07_new_backend_integration.md](./07_new_backend_integration.md)**.
+    *   *Status: Plan only. Not yet implemented.*
 
 ---
 
 ## 5. Development & Quality Assurance
 
 *   **Testing Strategy**: The high-level approach to unit, integration, and end-to-end testing is defined in **[10_testing_and_validation.md](./10_testing_and_validation.md)**.
+    *   *Status: Infrastructure only. No tests have been written.*
 
 *   **Current Implementation Status**: For a real-time snapshot of development progress and what has actually been built versus what was planned, see **[CONTEXT.md](./CONTEXT.md)**. This document tracks phase completion, implementation differences, and priority recommendations. It is validated using Playwright MCP exploration.
 
@@ -56,6 +63,8 @@ This section contains the most critical information for ensuring the frontend co
 
 The following areas require further definition and are documented as gaps. Do not invent solutions for these; seek clarification first.
 
-*   **API Error Handling**: The exact schema for structured API error responses is not yet defined. See `06_backend_interface_contracts.md`.
-*   **API Pagination**: The contract for paginated data is not yet defined. See `06_backend_interface_contracts.md`.
-*   **Active API Client**: The logic for managing the user's active broker connection (`apiClientId`) is not specified. See "Documentation Issues & Gaps" in `index.md` (this file).
+*   **API Error Handling**: The exact schema for structured API error responses is not yet defined. (See `06_backend_interface_contracts.md`).
+*   **API Pagination**: The contract for paginated data is not yet defined. (See `06_backend_interface_contracts.md`).
+*   **Active API Client/Account**: The logic for retrieving and managing the user's active broker connection (`apiClientId`) and selected accounts (`account_ids`) on the frontend is not specified. (See `07_new_backend_integration.md`).
+*   **Logout Implementation**: The logout flow is defined but not yet implemented. (See `09_auth_flow.md`).
+*   **User Profile Fetch**: The step to fetch user data after login is not implemented. (See `09_auth_flow.md`).

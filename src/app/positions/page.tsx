@@ -1,33 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import { Header, CosmicBackground } from "@/components/layout";
 import { useAppStore } from "@/store/appStore";
 import { useAuthStore } from "@/store/authStore";
 import apiClient from "@/lib/api-client";
-import type { PortfolioAnalysisResponse } from "@/types/api";
+import type { FullPortfolioAnalysisResponse as PortfolioAnalysisResponse } from "@/types/portfolio";
 import { transformToTableFormat } from "@/lib/utils/position";
-import { PositionsDataTable } from "./components/PositionsDataTable";
 import { createPositionColumns } from "./components/columns/position-columns";
 import { Skeleton } from "@/components/ui";
+import { PositionsDataTable } from "./components/PositionsDataTable";
+import { DataFreshness } from "@/components/dashboard";
 
 export default function PositionsPage() {
   const router = useRouter();
-  const { selectedApiClientId, selectedAccountIds, additionalCash } =
+  const { selectedApiClientId, selectedAccountIds, additionalCash, _hasHydrated } =
     useAppStore();
   const { user } = useAuthStore();
 
   const [portfolioData, setPortfolioData] =
     useState<PortfolioAnalysisResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  console.log("PositionsPage render - isLoading:", isLoading);
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   // Fetch portfolio data
-  const fetchPortfolioData = async () => {
+  const fetchPortfolioData = useCallback(async () => {
     if (!selectedApiClientId || selectedAccountIds.length === 0) {
       setIsLoading(false);
       return;
@@ -36,7 +38,7 @@ export default function PositionsPage() {
     try {
       setIsLoading(true);
       setError(null);
-
+      console.log("Positions: Fetching data for API client:", selectedApiClientId, "accounts:", selectedAccountIds);
       const response = await apiClient.post<PortfolioAnalysisResponse>(
         `/api-clients/${selectedApiClientId}/portfolio-analysis/full`,
         {
@@ -44,11 +46,11 @@ export default function PositionsPage() {
           additional_cash: additionalCash,
         }
       );
-
+      console.log("Positions: API Success Response:", response.data);
       setPortfolioData(response.data);
       setLastUpdated(new Date());
     } catch (err: any) {
-      console.error("Failed to fetch portfolio data:", err);
+      console.error("Positions: API Error:", err);
       setError(
         err.response?.data?.detail ||
           "Failed to load portfolio data. Please try again."
@@ -56,11 +58,17 @@ export default function PositionsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedApiClientId, selectedAccountIds, additionalCash, setIsLoading, setError, setPortfolioData, setLastUpdated]);
 
   useEffect(() => {
-    fetchPortfolioData();
-  }, [selectedApiClientId, selectedAccountIds, additionalCash]);
+    console.log("Positions useEffect triggered.");
+    console.log("  _hasHydrated:", _hasHydrated);
+    console.log("  selectedApiClientId:", selectedApiClientId);
+    console.log("  selectedAccountIds:", selectedAccountIds);
+    if (_hasHydrated) {
+      fetchPortfolioData();
+    }
+  }, [selectedApiClientId, selectedAccountIds, additionalCash, fetchPortfolioData, _hasHydrated]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -232,6 +240,10 @@ export default function PositionsPage() {
               <PositionsDataTable columns={columns} data={tableData} />
             </div>
           </div>
+          <DataFreshness
+            lastUpdated={lastUpdated || new Date()}
+            onRefresh={handleRefresh}
+          />
         </main>
       </div>
     </AuthGuard>

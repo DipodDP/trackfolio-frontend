@@ -1,6 +1,7 @@
 "use client";
 
 import { TablePosition } from "@/types/position";
+import { moneyValueToNumber } from "@/lib/utils/money"; // Import moneyValueToNumber
 import {
   OrderDialog as SharedOrderDialog,
   OrderInstrumentData,
@@ -32,7 +33,7 @@ export function OrderDialog({
     figi: position.figi,
     ticker: position.ticker,
     name: position.name,
-    currentPrice: position.current_price,
+    currentPrice: moneyValueToNumber(position.current_price),
     currency: position.current_price.currency,
   };
 

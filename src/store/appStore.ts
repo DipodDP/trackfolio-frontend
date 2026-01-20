@@ -2,6 +2,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 interface AppState {
+  _hasHydrated: boolean;
+  setHasHydrated: (hydrated: boolean) => void;
+
   // Selected API client
   selectedApiClientId: number | null;
   setSelectedApiClient: (id: number | null) => void;
@@ -23,6 +26,10 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
+      _hasHydrated: false,
+      setHasHydrated: (hydrated: boolean) => {
+        set({ _hasHydrated: hydrated });
+      },
       selectedApiClientId: null,
       selectedAccountIds: [],
       additionalCash: 0,
@@ -65,6 +72,13 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "trackfolio-app-state",
+      onRehydrateStorage: () => {
+        return (state) => {
+          if (state) {
+            state.setHasHydrated(true);
+          }
+        };
+      },
     }
   )
 );

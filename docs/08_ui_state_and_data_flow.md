@@ -11,6 +11,17 @@ To define a clear and consistent strategy for managing state within the applicat
 ### Why this step exists
 State management is one of the most complex aspects of a frontend application. A poorly defined strategy leads to bugs, performance issues, and code that is difficult to reason about. By establishing clear patterns from the start, we can build a scalable and robust application where data flows in a predictable and easily debuggable way.
 
+### Current Implementation Status (Updated 2026-01-11) ⚠️ INFRASTRUCTURE ONLY
+
+The tools mentioned in this document have been installed, but **are not yet configured or used**.
+
+-   **React Query**: Installed (`@tanstack/react-query@5.62.12`), but the `QueryClientProvider` has not been set up, and no `useQuery` hooks are in use.
+-   **Zustand**: Installed (`zustand@5.0.2`), but no stores have been created. Authentication state is currently managed via direct access to `sessionStorage`.
+
+This document outlines the **planned architectural strategy** for state management, which is to be implemented in a future phase.
+
+---
+
 ### Categories of State
 
 We will categorize state into three types:

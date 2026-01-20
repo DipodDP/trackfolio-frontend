@@ -1,10 +1,7 @@
-import {
-  EnrichedPosition,
-  PlanPosition,
-  MoneyValue,
-} from "@/types/api";
+import { MoneyValue, EnrichedPosition, PlanPosition } from "@/types/portfolio";
 import { TablePosition } from "@/types/position";
 import { moneyValueToNumber } from "./money";
+import { quotationToNumber } from "@/utils/formatters"; // Import quotationToNumber
 
 /**
  * Filters out currency positions from the positions array
@@ -23,12 +20,12 @@ export function mergePositionWithPlan(
   planPos: PlanPosition | undefined
 ): TablePosition {
   // Convert profit from MoneyValue to number if available
-  const profitValue: MoneyValue | null = enrichedPos.profit
+  const profitValue: MoneyValue | null = enrichedPos.profit !== null && enrichedPos.profit !== undefined
     ? {
         currency: enrichedPos.current_price.currency,
-        units: Math.floor(enrichedPos.profit),
+        units: Math.floor(parseFloat(enrichedPos.profit)), // Convert to number
         nano: Math.round(
-          (enrichedPos.profit - Math.floor(enrichedPos.profit)) * 1_000_000_000
+          (parseFloat(enrichedPos.profit) - Math.floor(parseFloat(enrichedPos.profit))) * 1_000_000_000
         ),
       }
     : null;
@@ -41,26 +38,26 @@ export function mergePositionWithPlan(
     instrument_type: enrichedPos.instrument_type,
 
     // Current position data
-    quantity: enrichedPos.quantity,
+    quantity: quotationToNumber(enrichedPos.quantity),
     current_price: enrichedPos.current_price,
     total: enrichedPos.total,
-    proportion: enrichedPos.proportion,
-    proportion_in_portfolio: enrichedPos.proportion_in_portfolio,
+    proportion: parseFloat(enrichedPos.proportion),
+    proportion_in_portfolio: parseFloat(enrichedPos.proportion_in_portfolio),
     profit: profitValue,
-    profit_fifo: enrichedPos.profit_fifo,
-    lot: enrichedPos.lot,
+    profit_fifo: parseFloat(enrichedPos.profit_fifo),
+    lot: enrichedPos.lot_size,
 
     // Plan data (with defaults if plan doesn't exist)
-    plan_quantity: planPos?.plan_quantity ?? 0,
+    plan_quantity: planPos?.plan_quantity ? quotationToNumber(planPos.plan_quantity) : 0,
     plan_total: planPos?.plan_total ?? {
       currency: enrichedPos.current_price.currency,
       units: 0,
       nano: 0,
     },
-    plan_proportion_in_portfolio: planPos?.plan_proportion_in_portfolio ?? 0,
-    to_buy_lots: planPos?.to_buy_lots ?? 0,
-    target_profit: planPos?.target_profit ?? 1.65,
-    exit_drawdown: planPos?.exit_drawdown ?? 0.5,
+    plan_proportion_in_portfolio: planPos?.plan_proportion_in_portfolio ? parseFloat(planPos.plan_proportion_in_portfolio) : 0,
+    to_buy_lots: planPos?.to_buy_lots ? quotationToNumber(planPos.to_buy_lots) : 0,
+    target_profit: planPos?.target_profit ? parseFloat(planPos.target_profit) : 1.65,
+    exit_drawdown: planPos?.exit_drawdown ? parseFloat(planPos.exit_drawdown) : 0.5,
     exit_profit_price: planPos?.exit_profit_price ?? {
       currency: enrichedPos.current_price.currency,
       units: 0,
@@ -71,7 +68,7 @@ export function mergePositionWithPlan(
       units: 0,
       nano: 0,
     },
-    target_progress: planPos?.target_progress ?? null,
+    target_progress: planPos?.target_progress !== null && planPos?.target_progress !== undefined ? parseFloat(planPos.target_progress) : null,
   };
 }
 

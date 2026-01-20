@@ -21,7 +21,7 @@ This step is critical for ensuring that the application's UI is visually consist
     -   Delete the default assets in the `public` directory (`next.svg`, `vercel.svg`).
 
 2.  **Update `tailwind.config.ts`**
-    Replace the content of `tailwind.config.ts` with the configuration below. This is derived directly from the `dashboard.html` prototype.
+    Replace the content of `tailwind.config.ts` with the configuration below. This version uses direct hex values as implemented.
 
     ```typescript
     import type { Config } from "tailwindcss";
@@ -36,16 +36,16 @@ This step is critical for ensuring that the application's UI is visually consist
       theme: {
         extend: {
           colors: {
-            primary: "var(--color-primary)",
-            "primary-hover": "var(--color-primary-hover)",
-            "primary-text": "var(--color-primary-text)",
-            "secondary-text": "var(--color-secondary-text)",
-            "background-dark": "var(--color-background-dark)",
-            "card-dark": "var(--color-card-dark)",
-            "border-dark": "var(--color-border-dark)",
-            coral: "var(--color-coral)",
-            success: "var(--color-success)",
-            error: "var(--color-error)",
+            primary: "#d72c2c",
+            "primary-hover": "#b52424",
+            "primary-text": "#f2e3c2",
+            "secondary-text": "#a9a9b4",
+            "background-dark": "#121828",
+            "card-dark": "#1a2238",
+            "border-dark": "#3a4466",
+            coral: "#e86854",
+            success: "#4caf50",
+            error: "#d72c2c",
           },
           fontFamily: {
             display: ["Bebas Neue", "sans-serif"],
@@ -66,7 +66,7 @@ This step is critical for ensuring that the application's UI is visually consist
     ```
 
 3.  **Update Global Styles (`src/app/globals.css`)**
-    Add the following CSS to `src/app/globals.css`. This file defines the CSS variables for colors and sets up base styles.
+    Add the following CSS to `src/app/globals.css`. This file sets up base styles, component utilities, and the grain overlay effect.
 
     ```css
     @tailwind base;
@@ -74,25 +74,30 @@ This step is critical for ensuring that the application's UI is visually consist
     @tailwind utilities;
 
     @layer base {
-      :root {
-        /* Colors from prototype */
-        --color-primary: #d72c2c;
-        --color-primary-hover: #b52424;
-        --color-primary-text: #f2e3c2;
-        --color-secondary-text: #a9a9b4;
-        --color-background-dark: #121828;
-        --color-card-dark: #1a2238;
-        --color-border-dark: #3a4466;
-        --color-coral: #e86854;
-        --color-success: #4caf50;
-        --color-error: #d72c2c;
-      }
-
       body {
-        @apply bg-background-dark font-body text-secondary-text;
+        @apply bg-background-dark font-body text-primary-text;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
+    }
+
+    @layer components {
+      .grain-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        background: url('/subtle-white-feathers.png');
+        opacity: 0.1;
+        z-index: 100;
+      }
+      
+      .btn-primary { ... }
+      .btn-secondary { ... }
+      .card { ... }
+      .input { ... }
     }
     ```
 

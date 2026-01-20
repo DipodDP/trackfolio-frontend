@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import { Header, CosmicBackground } from "@/components/layout";
@@ -9,7 +9,6 @@ import {
   StatCard,
   AllocationBar,
   AllocationLegend,
-  PositionsTable,
   RecommendationsGrid,
   QuickActions,
   HeroSection,
@@ -19,23 +18,37 @@ import {
 } from "@/components/dashboard";
 import { useAppStore } from "@/store/appStore";
 import { useAuthStore } from "@/store/authStore";
-import apiClient from "@/lib/api-client";
+
+// New imports for portfolio analysis
+import { usePortfolioAnalysis } from "@/hooks/usePortfolioAnalysis";
+import { useApiClientId } from "@/hooks/useApiClientId";
+import { useSelectedAccountIds } from "@/hooks/useSelectedAccountIds";
+import { PortfolioTable } from "@/components/portfolio/PortfolioTable";
+import { StructureTable } from "@/components/portfolio/StructureTable";
+import { PortfolioSummary } from "@/components/portfolio/PortfolioSummary"; // Placeholder needed
+
 import { formatMoneyValue, moneyValueToNumber } from "@/lib/utils/money";
-import type { PortfolioAnalysisResponse } from "@/types/api";
+import { quotationToNumber } from "@/utils/formatters"; // Import quotationToNumber
+import { MoneyValue } from "@/types/portfolio"; // Import MoneyValue type
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { selectedApiClientId, selectedAccountIds, additionalCash } =
-    useAppStore();
+  const { additionalCash, _hasHydrated } = useAppStore();
   const { user } = useAuthStore();
 
-  const [portfolioData, setPortfolioData] =
-    useState<PortfolioAnalysisResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [isSandbox, setIsSandbox] = useState(true);
+  const apiClientId = useApiClientId();
+  const selectedAccountIds = useSelectedAccountIds();
+
+  const {
+    data: analysis,
+    isLoading,
+    error,
+    refetch,
+  } = usePortfolioAnalysis(apiClientId, selectedAccountIds);
+
+  const isSandbox = true; // Hardcoded for now, can be state later
+
+  console.log("DashboardPage render - isLoading:", isLoading);
 
   const {
     totalPortfolio,
@@ -46,17 +59,21 @@ export default function DashboardPage() {
     allocationSegments,
     legendItems,
     totalCurrencies,
+    enrichedPositions, // Added for new PortfolioTable
+    planPositions // Added for new PortfolioTable
   } = useMemo(() => {
-    if (!portfolioData) {
+    if (!analysis) {
       return {
-        totalPortfolio: 0,
+        totalPortfolio: { currency: 'RUB' as const, units: 0, nano: 0 }, // Default MoneyValue
         totalProfitLoss: 0,
         plPercentage: 0,
         positions: [],
         recommendations: [],
         allocationSegments: { current: [], target: [] },
         legendItems: [],
-        totalCurrencies: 0,
+        totalCurrencies: { currency: 'rub', units: 0, nano: 0 }, // Default MoneyValue
+        enrichedPositions: [],
+        planPositions: []
       };
     }
 
@@ -65,18 +82,24 @@ export default function DashboardPage() {
       enriched_positions,
       plan_positions,
       structure_analysis,
-    } = portfolioData;
+    } = analysis;
 
-    const totalPortfolio = moneyValueToNumber(
-      consolidated_portfolio.total_amount_portfolio
-    );
+    const totalPortfolio = consolidated_portfolio.total_amount_portfolio;
 
-    const totalProfitLoss = enriched_positions.reduce((sum, pos) => {
-      return sum + (pos.profit ? moneyValueToNumber(pos.profit) : 0);
+    // totalProfitLoss calculation
+    const totalProfitLossAmount = enriched_positions.reduce((sum, pos) => {
+      // Assuming pos.profit_fifo is a string, convert to number
+      return sum + parseFloat(pos.profit_fifo || '0');
     }, 0);
+    // Convert totalProfitLossAmount to MoneyValue
+    const totalProfitLoss: MoneyValue = {
+      currency: totalPortfolio.currency, // Use portfolio currency
+      units: Math.floor(totalProfitLossAmount),
+      nano: Math.round((totalProfitLossAmount % 1) * 1_000_000_000),
+    };
 
     const plPercentage =
-      totalPortfolio > 0 ? (totalProfitLoss / totalPortfolio) * 100 : 0;
+      moneyValueToNumber(totalPortfolio) > 0 ? (moneyValueToNumber(totalProfitLoss) / moneyValueToNumber(totalPortfolio)) * 100 : 0;
 
     const positions: Position[] = enriched_positions.slice(0, 5).map((pos) => {
       const plan_pos = plan_positions.find((p) => p.figi === pos.figi);
@@ -84,89 +107,81 @@ export default function DashboardPage() {
         ticker: pos.ticker,
         name: pos.name,
         instrumentType: pos.instrument_type,
-        price: pos.current_price ? moneyValueToNumber(pos.current_price) : 0,
-        quantity: pos.quantity,
-        total: pos.total ? moneyValueToNumber(pos.total) : 0,
-        planTotal: plan_pos?.plan_total
-          ? moneyValueToNumber(plan_pos.plan_total)
-          : 0,
-        proportion: (pos.proportion_in_portfolio ?? 0) * 100,
+        price: moneyValueToNumber(pos.current_price), // Convert MoneyValue to number
+        quantity: quotationToNumber(pos.quantity), // Convert Quotation to number
+        total: moneyValueToNumber(pos.total), // Convert MoneyValue to number
+        planTotal: plan_pos?.plan_total ? moneyValueToNumber(plan_pos.plan_total) : 0, // Convert MoneyValue to number
+        proportion: parseFloat(pos.proportion_in_portfolio) * 100,
         profit: {
-          amount: pos.profit ? moneyValueToNumber(pos.profit) : 0,
-          percent: (pos.profit_fifo ?? 0) * 100,
+          amount: parseFloat(pos.profit || '0'),
+          percent: parseFloat(pos.profit_fifo || '0') * 100,
         },
-        targetProgress: plan_pos?.target_progress ?? 0,
+        targetProgress: parseFloat(plan_pos?.target_progress || '0'),
       };
     });
 
     const recommendations: Recommendation[] = plan_positions
-      .filter((pos) => pos.to_buy_lots !== 0)
+      .filter((pos) => pos.to_buy_lots.units !== 0 || pos.to_buy_lots.nano !== 0) // Filter by MoneyValue equivalent
       .slice(0, 3)
       .map((pos) => ({
-        action: pos.to_buy_lots > 0 ? "BUY" : "SELL",
+        action: (pos.to_buy_lots.units || pos.to_buy_lots.nano) > 0 ? "BUY" : "SELL", // Check units or nano
         ticker: pos.ticker,
-        quantity: Math.abs(pos.to_buy_lots),
+        quantity: Math.abs(quotationToNumber(pos.to_buy_lots)), // Convert Quotation to number
         reason:
-          pos.to_buy_lots > 0
+          (pos.to_buy_lots.units || pos.to_buy_lots.nano) > 0
             ? `Target allocation: ${(
-                pos.plan_proportion_in_portfolio * 100
+                parseFloat(pos.plan_proportion_in_portfolio) * 100
               ).toFixed(1)}%`
             : "Reduce position to target",
         type: "rebalance" as const,
       }));
 
-    const currentPlanStructure = structure_analysis.current_structure;
-    const targetPlanStructure = structure_analysis.plan_structure;
+    const currentStructure = structure_analysis.current_low_risk; // Corrected path
+    const targetStructure = structure_analysis.plan_low_risk; // Corrected path
 
     const allocationSegments = {
       current: [
         {
           label: "Shares",
-          value: currentPlanStructure?.high_risk_part?.shares_proportion ?? 0,
+          value: parseFloat(structure_analysis.current_high_risk.component_proportions.shares || '0'),
           color: "bg-primary",
         },
         {
           label: "Bonds",
-          value:
-            currentPlanStructure?.low_risk_part?.corp_bonds_proportion ?? 0,
+          value: parseFloat(structure_analysis.current_low_risk.component_proportions.corp_bonds || '0'),
           color: "bg-coral",
         },
         {
           label: "ETFs",
-          value: currentPlanStructure?.high_risk_part?.etf_proportion ?? 0,
+          value: parseFloat(structure_analysis.current_high_risk.component_proportions.etf || '0'),
           color: "bg-success",
         },
         {
           label: "Gov Bonds",
-          value:
-            currentPlanStructure?.low_risk_part?.gov_bonds_proportion ?? 0,
+          value: parseFloat(structure_analysis.current_low_risk.component_proportions.gov_bonds || '0'),
           color: "bg-warning",
         },
       ],
-      target: targetPlanStructure
+      target: structure_analysis.plan_high_risk && structure_analysis.plan_low_risk
         ? [
             {
               label: "Shares",
-              value: targetPlanStructure?.high_risk_part?.shares_proportion ?? 0,
+              value: parseFloat(structure_analysis.plan_high_risk.component_proportions.shares || '0'),
               color: "bg-primary",
             },
             {
               label: "Bonds",
-              value:
-                targetPlanStructure?.low_risk_part?.corp_bonds_proportion ??
-                0,
+              value: parseFloat(structure_analysis.plan_low_risk.component_proportions.corp_bonds || '0'),
               color: "bg-coral",
             },
             {
               label: "ETFs",
-              value: targetPlanStructure?.high_risk_part?.etf_proportion ?? 0,
+              value: parseFloat(structure_analysis.plan_high_risk.component_proportions.etf || '0'),
               color: "bg-success",
             },
             {
               label: "Gov Bonds",
-              value:
-                targetPlanStructure?.low_risk_part?.gov_bonds_proportion ??
-                0,
+              value: parseFloat(structure_analysis.plan_low_risk.component_proportions.gov_bonds || '0'),
               color: "bg-warning",
             },
           ]
@@ -178,9 +193,7 @@ export default function DashboardPage() {
       color: segment.color,
     }));
     
-    const totalCurrencies = moneyValueToNumber(
-      consolidated_portfolio.total_amount_currencies
-    );
+    const totalCurrencies = consolidated_portfolio.total_amount_currencies;
 
     return {
       totalPortfolio,
@@ -191,56 +204,17 @@ export default function DashboardPage() {
       allocationSegments,
       legendItems,
       totalCurrencies,
+      enrichedPositions: enriched_positions,
+      planPositions: plan_positions
     };
-  }, [portfolioData]);
+  }, [analysis]);
 
-  const fetchPortfolioData = async () => {
-    if (!selectedApiClientId || selectedAccountIds.length === 0) {
-      setIsLoading(false);
-      return;
-    }
 
-    try {
-      setIsLoading(true);
-      setError(null);
 
-      const response = await apiClient.post<PortfolioAnalysisResponse>(
-        `/api-clients/${selectedApiClientId}/portfolio-analysis/full`,
-        {
-          account_ids: selectedAccountIds,
-          additional_cash: additionalCash,
-        }
-      );
 
-      setPortfolioData(response.data);
-      setLastUpdated(new Date());
-    } catch (err: any) {
-      console.error("Failed to fetch portfolio data:", err);
-      setError(
-        err.response?.data?.detail ||
-          "Failed to load portfolio data. Please try again."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPortfolioData();
-  }, [selectedApiClientId, selectedAccountIds, additionalCash]);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await fetchPortfolioData();
-    setIsRefreshing(false);
-  };
-
-  const handleToggleSandbox = () => {
-    setIsSandbox((prev) => !prev);
-  };
 
   // Show empty state if no accounts selected
-  if (!selectedApiClientId || selectedAccountIds.length === 0) {
+  if (!apiClientId || selectedAccountIds.length === 0 || !_hasHydrated) {
     return (
       <AuthGuard>
         <CosmicBackground />
@@ -249,7 +223,7 @@ export default function DashboardPage() {
         <div className="relative min-h-screen">
           <Header
             isSandbox={isSandbox}
-            onToggleSandbox={handleToggleSandbox}
+            onToggleSandbox={() => {}}
             userName={user?.username || "User"}
           />
 
@@ -280,7 +254,7 @@ export default function DashboardPage() {
   }
 
   // Show loading state
-  if (isLoading && !portfolioData) {
+  if (isLoading && !analysis) {
     return (
       <AuthGuard>
         <CosmicBackground />
@@ -289,7 +263,7 @@ export default function DashboardPage() {
         <div className="relative min-h-screen">
           <Header
             isSandbox={isSandbox}
-            onToggleSandbox={handleToggleSandbox}
+            onToggleSandbox={() => {}}
             userName={user?.username || "User"}
           />
 
@@ -307,7 +281,7 @@ export default function DashboardPage() {
   }
 
   // Show error state
-  if (error && !portfolioData) {
+  if (error && !analysis) {
     return (
       <AuthGuard>
         <CosmicBackground />
@@ -316,7 +290,7 @@ export default function DashboardPage() {
         <div className="relative min-h-screen">
           <Header
             isSandbox={isSandbox}
-            onToggleSandbox={handleToggleSandbox}
+            onToggleSandbox={() => {}} // No longer using internal state for isSandbox
             userName={user?.username || "User"}
           />
 
@@ -330,9 +304,9 @@ export default function DashboardPage() {
                   <h3 className="text-xl font-bold text-primary-text mb-2">
                     Error Loading Portfolio
                   </h3>
-                  <p className="text-secondary-text mb-4">{error}</p>
+                  <p className="text-secondary-text mb-4">{error.message}</p>
                   <div className="flex gap-4">
-                    <button onClick={handleRefresh} className="btn btn-primary">
+                    <button onClick={() => refetch()} className="btn btn-primary">
                       Try Again
                     </button>
                     <button
@@ -351,7 +325,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (!portfolioData) {
+  if (!analysis) {
     return null;
   }
 
@@ -363,7 +337,7 @@ export default function DashboardPage() {
       <div className="relative min-h-screen">
         <Header
           isSandbox={isSandbox}
-          onToggleSandbox={handleToggleSandbox}
+          onToggleSandbox={() => {}} // isSandbox is hardcoded for now
           userName={user?.username || "User"}
         />
 
@@ -374,10 +348,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-6 mb-8">
             <StatCard
               title="Total Portfolio Value"
-              value={formatMoneyValue(
-                portfolioData.consolidated_portfolio.total_amount_portfolio,
-                { decimals: 2 }
-              )}
+              value={formatMoneyValue(analysis.consolidated_portfolio.total_amount_portfolio)}
               change={{
                 value: `${plPercentage >= 0 ? "+" : ""}${plPercentage.toFixed(2)}%`,
                 isPositive: plPercentage >= 0,
@@ -387,16 +358,7 @@ export default function DashboardPage() {
             />
             <StatCard
               title="Unrealized P/L"
-              value={`${totalProfitLoss >= 0 ? "+" : ""}${formatMoneyValue(
-                {
-                  currency: portfolioData.consolidated_portfolio.total_amount_portfolio.currency,
-                  units: Math.floor(totalProfitLoss),
-                  nano: Math.round(
-                    (totalProfitLoss - Math.floor(totalProfitLoss)) * 1_000_000_000
-                  ),
-                },
-                { decimals: 2 }
-              )}`}
+              value={`${plPercentage >= 0 ? "+" : ""}${formatMoneyValue(totalProfitLoss)}`}
               change={{
                 value: `${plPercentage >= 0 ? "+" : ""}${plPercentage.toFixed(2)}%`,
                 isPositive: plPercentage >= 0,
@@ -406,59 +368,39 @@ export default function DashboardPage() {
             />
             <StatCard
               title="Available Cash"
-              value={formatMoneyValue(
-                portfolioData.consolidated_portfolio.total_amount_currencies,
-                { decimals: 2 }
-              )}
-              subtitle={`${totalPortfolio === 0 ? "0.0%" : ((totalCurrencies / totalPortfolio) * 100).toFixed(1)}% of Portfolio`}
+              value={formatMoneyValue(analysis.consolidated_portfolio.cash_balance)}
+              subtitle={`${moneyValueToNumber(totalPortfolio) === 0 ? "0.0%" : ((moneyValueToNumber(analysis.consolidated_portfolio.cash_balance) / moneyValueToNumber(totalPortfolio)) * 100).toFixed(1)}% of Portfolio`}
               accentColor="coral"
             />
           </div>
 
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-12 gap-6">
-            {/* Left Column - Risk Allocation & Positions */}
-            <div className="col-span-12 lg:col-span-8 space-y-6">
-              {/* Risk Allocation */}
-              <Card>
-                <h2 className="text-lg font-semibold text-primary-text mb-4">
-                  Asset Allocation
-                </h2>
-                <div className="space-y-4">
-                  <AllocationBar
-                    label="Current Allocation"
-                    segments={allocationSegments.current}
-                  />
-                  {allocationSegments.target.length > 0 && (
-                    <AllocationBar
-                      label="Target Allocation"
-                      segments={allocationSegments.target}
-                    />
-                  )}
-                </div>
-                <AllocationLegend items={legendItems} />
-              </Card>
+          {/* Structure Section */}
+          <section className="mt-8">
+            <h1 className="text-2xl font-bold mb-4">Structure</h1>
+            <StructureTable data={analysis.structure_analysis} />
+          </section>
 
-              {/* Top Positions */}
-              <Card>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-primary-text">
-                    Top Positions
-                  </h2>
-                  <a
-                    href="/positions"
-                    className="text-sm text-coral hover:text-primary-text transition-colors"
-                  >
-                    View All Positions →
-                  </a>
-                </div>
-                <PositionsTable
-                  positions={positions}
-                  data-testid="positions-table"
-                />
-              </Card>
-            </div>
+          {/* Portfolio Summary Section */}
+          <section className="mt-8">
+            <h3 className="text-lg font-semibold mb-2">Portfolio summary</h3>
+            <PortfolioSummary
+              consolidated={analysis.consolidated_portfolio}
+              totalCash={analysis.total_additional_cash}
+              assetProportions={analysis.proportion_in_portfolio}
+            />
+          </section>
 
+          {/* Portfolio Table Section */}
+          <section className="mt-8">
+            <h1 className="text-2xl font-bold mb-4">Portfolio</h1>
+            <PortfolioTable
+              enrichedPositions={enrichedPositions}
+              planPositions={planPositions}
+            />
+          </section>
+
+          {/* Main Content Grid - Recommendations & Quick Actions */}
+          <div className="grid grid-cols-12 gap-6 mt-8">
             {/* Right Column - Recommendations & Quick Actions */}
             <div className="col-span-12 lg:col-span-4 space-y-6">
               {/* Rebalancing Recommendations */}
@@ -489,9 +431,9 @@ export default function DashboardPage() {
 
           {/* Data Freshness Footer */}
           <DataFreshness
-            lastUpdated={lastUpdated || new Date()}
-            onRefresh={handleRefresh}
-            isRefreshing={isRefreshing}
+            lastUpdated={new Date()} // Using current date as last updated time
+            onRefresh={() => refetch()} // Use refetch function from usePortfolioAnalysis
+            isRefreshing={isLoading} // Use isLoading from usePortfolioAnalysis
           />
         </main>
       </div>

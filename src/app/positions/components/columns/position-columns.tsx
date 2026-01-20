@@ -92,10 +92,10 @@ export function createPositionColumns(
         <DataTableColumnHeader column={column} title="Price" />
       ),
       cell: ({ row }) => {
-        const price = row.original.current_price;
+        const currency = row.original.current_price.currency;
         return (
           <div className="text-right font-medium text-primary-text w-[100px]">
-            {formatMoneyValue(price, { decimals: 2 })}
+            {formatMoneyValue(row.original.current_price, { decimals: 2, currency: currency })}
           </div>
         );
       },
@@ -126,10 +126,10 @@ export function createPositionColumns(
         <DataTableColumnHeader column={column} title="Total" />
       ),
       cell: ({ row }) => {
-        const total = row.original.total;
+        const currency = row.original.total.currency;
         return (
           <div className="text-right font-semibold text-primary-text w-[120px]">
-            {formatMoneyValue(total, { decimals: 2 })}
+            {formatMoneyValue(row.original.total, { decimals: 2, currency: currency })}
           </div>
         );
       },
@@ -144,9 +144,10 @@ export function createPositionColumns(
       ),
       cell: ({ row }) => {
         const planTotal = row.original.plan_total;
+        const currency = row.original.plan_total.currency;
         return (
           <div className="text-right font-medium text-secondary-text w-[120px]">
-            {formatMoneyValue(planTotal, { decimals: 2 })}
+            {formatMoneyValue(planTotal, { decimals: 2, currency: currency })}
           </div>
         );
       },

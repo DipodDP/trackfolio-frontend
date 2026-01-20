@@ -1,6 +1,6 @@
 "use client";
 
-type BadgeVariant = "success" | "error" | "warning" | "info" | "coral" | "neutral";
+type BadgeVariant = "success" | "error" | "warning" | "info" | "coral" | "neutral" | "outline";
 
 interface BadgeProps {
   variant?: BadgeVariant;
@@ -16,6 +16,7 @@ const variantClasses: Record<BadgeVariant, string> = {
   info: "badge-info",
   coral: "badge-coral",
   neutral: "badge-neutral",
+  outline: "badge-outline",
 };
 
 const dotColorClasses: Record<BadgeVariant, string> = {
@@ -25,6 +26,7 @@ const dotColorClasses: Record<BadgeVariant, string> = {
   info: "bg-info",
   coral: "bg-coral",
   neutral: "bg-secondary-text",
+  outline: "bg-transparent", // Added for outline variant
 };
 
 export function Badge({

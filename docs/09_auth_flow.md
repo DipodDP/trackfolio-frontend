@@ -36,7 +36,7 @@ To balance security and user experience, the backend uses a two-token system:
 
 #### 1. User Login
 
-1.  **UI**: The user enters their credentials into the form on the `/sign-in` page.
+1.  **UI**: The user enters their credentials into the form on the `/login` page.
 2.  **API Call**: The form's `onSubmit` handler calls a mutation that sends a `POST` request to `/api/v1/login`.
     -   **`Content-Type`**: `application/x-www-form-urlencoded`
     -   **Body**: `username=<email>&password=<password>`
@@ -46,14 +46,14 @@ To balance security and user experience, the backend uses a two-token system:
         -   The response headers set the `refresh_token` as an `HttpOnly` cookie.
     -   **On Failure (401 Unauthorized)**: The backend returns an error, which the frontend displays to the user.
 4.  **Client-Side Actions**:
-    -   The `access_token` is stored in the client-side state management (Zustand store).
-    -   The frontend fetches the user's profile data via `GET /api/v1/users/me` and populates the user store.
+    -   The `access_token` is stored in `sessionStorage`.
     -   The user is redirected to the `/dashboard`.
+    -   **Note**: Fetching the user profile (`GET /users/me`) is not yet implemented.
 
 #### 2. Authenticated API Calls
 
 1.  **Request Trigger**: The frontend needs to fetch data from a protected endpoint (e.g., `POST /api/v1/api-clients/{id}/portfolio-analysis/full`).
-2.  **Request Interception**: A request interceptor (in our API client) retrieves the `access_token` from the Zustand store and adds it to the `Authorization` header.
+2.  **Request Interception**: A request interceptor (in our API client) retrieves the `access_token` from `sessionStorage` and adds it to the `Authorization` header.
 3.  **Backend Verification**: The backend validates the `access_token`. If valid, it processes the request.
 
 #### 3. Access Token Refresh
@@ -65,9 +65,9 @@ To balance security and user experience, the backend uses a two-token system:
     -   **On Success**: The backend returns a new `access_token`.
     -   **On Failure**: The refresh token is invalid or expired. The backend returns a `401`, signaling that the user must log in again.
 5.  **Client-Side Actions**:
-    -   The new `access_token` is stored in the Zustand store.
+    -   The new `access_token` is stored in `sessionStorage`.
     -   The original failed request is automatically retried with the new token.
-    -   If refresh fails, all session data is cleared, and the user is redirected to `/sign-in`.
+    -   If refresh fails, all session data is cleared, and the user is redirected to `/login`.
 
 #### 4. Route Protection (Client-Side Guard)
 
@@ -89,8 +89,8 @@ To balance security and user experience, the backend uses a two-token system:
 1.  **UI**: The user clicks the "Logout" button.
 2.  **API Call**: The frontend sends a `POST` request to `/api/v1/logout`. The `Authorization` header and `refresh_token` cookie are included.
 3.  **Backend Action**: The backend invalidates both the access and refresh tokens (e.g., via a blacklist) and sends instructions to clear the `HttpOnly` cookie.
-4.  **Client-Side Cleanup**: The frontend clears all session-related state from the Zustand store.
-5.  **Redirect**: The user is redirected to `/sign-in`.
+4.  **Client-Side Cleanup**: The frontend clears all session-related state from `sessionStorage`.
+5.  **Redirect**: The user is redirected to `/login`.
 
 ### Current Implementation Summary (Updated 2026-01-11)
 
@@ -115,6 +115,7 @@ To balance security and user experience, the backend uses a two-token system:
 - Password reset flows
 - Role-based access control (RBAC)
 - User profile/session state management with Zustand
+- Logout functionality is not implemented.
 
 ### Verification & Open Questions
 -   **Verified**: This flow is now aligned with the backend documentation in `trackfolio/docs/technical/api-integration.md` and `KNOWLEDGE_BASE.md`. The use of `HttpOnly` cookies for refresh tokens is a security best practice.

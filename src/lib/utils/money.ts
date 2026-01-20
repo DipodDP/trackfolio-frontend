@@ -1,14 +1,18 @@
-import type { MoneyValue } from "@/types/api";
+import type { MoneyValue } from "@/types/portfolio";
 
 /**
  * Convert MoneyValue to decimal number
  * MoneyValue has units (integer part) and nano (fractional part, 10^-9)
  */
-export function moneyValueToNumber(money: MoneyValue | number): number {
-  if (typeof money === 'number') {
-    return money;
+export function moneyValueToNumber(value: MoneyValue | number | null | undefined): number {
+  if (value === null || value === undefined) {
+    return 0;
   }
-  return (money?.units ?? 0) + (money?.nano ?? 0) / 1_000_000_000;
+  if (typeof value === 'number') {
+    return value;
+  }
+  // Assume it's MoneyValue
+  return Number(value.units) + Number(value.nano) / 1_000_000_000;
 }
 
 /**
@@ -17,21 +21,22 @@ export function moneyValueToNumber(money: MoneyValue | number): number {
  * @param options Formatting options
  */
 export function formatMoneyValue(
-  money: MoneyValue | number,
+  value: MoneyValue | number | null | undefined,
   options?: {
     showCurrency?: boolean;
     decimals?: number;
+    currency?: string; // Add optional currency parameter
   }
 ): string {
-  const value = moneyValueToNumber(money);
+  const numericValue = moneyValueToNumber(value);
   const decimals = options?.decimals ?? 2;
-  const formatted = value.toLocaleString("en-US", {
+  const formatted = numericValue.toLocaleString("en-US", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
 
-  if (options?.showCurrency !== false && typeof money !== 'number' && money?.currency) {
-    const currencySymbol = getCurrencySymbol(money.currency);
+  if (options?.showCurrency !== false && options?.currency) {
+    const currencySymbol = getCurrencySymbol(options.currency);
     return `${currencySymbol}${formatted}`;
   }
 
@@ -43,12 +48,17 @@ export function formatMoneyValue(
  */
 function getCurrencySymbol(currency: string): string {
   const symbols: Record<string, string> = {
+    RUB: "₽",
     USD: "$",
     EUR: "€",
     GBP: "£",
-    RUB: "₽",
     JPY: "¥",
     CNY: "¥",
+    CHF: "CHF",
+    AUD: "A$",
+    CAD: "C$",
+    HKD: "HK$",
+    TRY: "₺",
   };
 
   return symbols[currency.toUpperCase()] || currency + " ";

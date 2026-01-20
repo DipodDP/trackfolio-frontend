@@ -9,12 +9,7 @@ export interface LoginResponse {
   token_type: "bearer";
 }
 
-// Money Value Type (used throughout API)
-export interface MoneyValue {
-  currency: string;
-  units: number;
-  nano: number;
-}
+
 
 // API Client Types
 export interface ApiClient {
@@ -55,12 +50,12 @@ export interface ProportionInPortfolio {
 }
 
 export interface ConsolidatedPortfolio {
-  total_amount_shares: MoneyValue;
-  total_amount_bonds: MoneyValue;
-  total_amount_etf: MoneyValue;
-  total_amount_currencies: MoneyValue;
-  total_amount_portfolio: MoneyValue;
-  total_additional_cash: MoneyValue;
+  total_amount_shares: number;
+  total_amount_bonds: number;
+  total_amount_etf: number;
+  total_amount_currencies: number;
+  total_amount_portfolio: number;
+  total_additional_cash: number;
   proportion_in_portfolio: ProportionInPortfolio;
 }
 
@@ -68,12 +63,12 @@ export interface EnrichedPosition {
   figi: string;
   instrument_type: "share" | "bond" | "etf" | "currency";
   quantity: number;
-  current_price: MoneyValue;
+  current_price: number;
   ticker: string;
   name: string;
   lot: number;
-  corrected_average_position_price: MoneyValue;
-  total: MoneyValue;
+  corrected_average_position_price: number;
+  total: number;
   proportion: number;
   proportion_in_portfolio: number;
   profit: number;
@@ -81,22 +76,22 @@ export interface EnrichedPosition {
 }
 
 export interface StructurePart {
-  low_risk_total_amount?: MoneyValue;
+  low_risk_total_amount?: number;
   low_risk_total_proportion?: number;
-  gov_bonds_amount?: MoneyValue;
+  gov_bonds_amount?: number;
   gov_bonds_proportion?: number;
-  corp_bonds_amount?: MoneyValue;
+  corp_bonds_amount?: number;
   corp_bonds_proportion?: number;
-  high_risk_total_amount?: MoneyValue;
+  high_risk_total_amount?: number;
   high_risk_total_proportion?: number;
-  shares_amount?: MoneyValue;
+  shares_amount?: number;
   shares_proportion?: number;
-  etf_amount?: MoneyValue;
+  etf_amount?: number;
   etf_proportion?: number;
 }
 
 export interface PortfolioStructureAnalysis {
-  total_amount: MoneyValue;
+  total_amount: number;
   risk_profile: number;
   max_risk_part_drawdown: number;
   risk_proportion: number;
@@ -117,13 +112,13 @@ export interface PlanPosition {
   ticker: string;
   name: string;
   plan_quantity: number;
-  plan_total: MoneyValue;
+  plan_total: number;
   plan_proportion_in_portfolio: number;
   to_buy_lots: number;
   target_profit: number;
   exit_drawdown: number;
-  exit_profit_price: MoneyValue;
-  exit_loss_price: MoneyValue;
+  exit_profit_price: number;
+  exit_loss_price: number;
   target_progress: number | null;
 }
 
