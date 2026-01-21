@@ -4,6 +4,7 @@ interface AllocationSegment {
   label: string;
   value: number;
   color: string;
+  riskType?: 'high' | 'low'; // Optional risk type indicator
 }
 
 interface AllocationBarProps {
@@ -16,17 +17,22 @@ export function AllocationBar({ label, segments }: AllocationBarProps) {
     <div className="flex items-center space-x-4">
       <span className="w-32 text-sm text-secondary-text">{label}</span>
       <div className="flex-1 flex h-6 rounded overflow-hidden bg-background-dark">
-        {segments.map((segment, index) => (
-          <div
-            key={index}
-            className={`${segment.color} flex items-center justify-end pr-2 text-xs font-medium ${
-              segment.color.includes("300") ? "text-zinc-800" : "text-white"
-            }`}
-            style={{ width: `${segment.value}%` }}
-          >
-            {segment.value}%
-          </div>
-        ))}
+        {segments.map((segment, index) => {
+          const displayValue = segment.value > 0 ? segment.value.toFixed(1) : '';
+          const isFirstLowRisk = index > 0 && segment.riskType === 'low' && segments[index - 1]?.riskType === 'high';
+
+          return (
+            <div
+              key={segment.label}
+              className={`${segment.color} flex items-center justify-end pr-2 text-xs font-medium ${
+                segment.color.includes("300") ? "text-zinc-800" : "text-white"
+              } ${isFirstLowRisk ? 'border-l-2 border-background' : ''}`}
+              style={{ width: `${segment.value}%` }}
+            >
+              {displayValue && `${displayValue}%`}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

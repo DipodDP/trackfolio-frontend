@@ -11,15 +11,18 @@ import {
   formatProfitDisplay,
   formatInstrumentType,
 } from "@/lib/utils/position";
+import { formatPercent } from "@/utils/formatters";
 import { PositionRowActions } from "../row-actions/PositionRowActions";
 import { OrderDialog } from "../dialogs/OrderDialog";
 
 /**
  * Create position table columns with refresh callback
  * @param onRefresh - Callback to refresh data after order execution
+ * @param onEditProportion - Callback to edit target proportion
  */
 export function createPositionColumns(
-  onRefresh: () => void
+  onRefresh: () => void,
+  onEditProportion: (position: TablePosition) => void
 ): ColumnDef<TablePosition>[] {
   return [
     // Checkbox column for row selection
@@ -163,36 +166,22 @@ export function createPositionColumns(
       cell: ({ row }) => {
         const currentProportion = row.getValue<number>("proportion_in_portfolio");
         const planProportion = row.original.plan_proportion_in_portfolio;
-        const toBuyLots = row.original.to_buy_lots;
-
-        const currentFormatted =
-          typeof currentProportion === "number"
-            ? (currentProportion * 100).toFixed(2)
-            : "0.00";
-        const planFormatted =
-          typeof planProportion === "number"
-            ? (planProportion * 100).toFixed(2)
-            : "0.00";
 
         return (
           <div className="text-right w-[100px]">
-            <div className="font-semibold text-primary-text">
-              {currentFormatted}%
+            <div className="flex flex-col gap-1.5 items-end">
+              <span className="font-medium">{formatPercent(currentProportion)}</span>
+              {planProportion > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onEditProportion(row.original)}
+                  className="px-2 py-0.5 text-xs font-medium bg-card hover:bg-card/80 border border-border hover:border-border/80 rounded text-text-secondary hover:text-text-primary transition-all"
+                  title="Click to edit target proportion"
+                >
+                  → {formatPercent(planProportion)}
+                </button>
+              )}
             </div>
-            {planProportion > 0 && (
-              <div className="text-xs text-secondary-text flex items-center justify-end gap-1">
-                <span>→ {planFormatted}%</span>
-                {toBuyLots !== 0 && (
-                  <span
-                    className={`material-symbols-outlined text-xs ${
-                      toBuyLots > 0 ? "text-success" : "text-coral"
-                    }`}
-                  >
-                    {toBuyLots > 0 ? "trending_up" : "trending_down"}
-                  </span>
-                )}
-              </div>
-            )}
           </div>
         );
       },
@@ -329,7 +318,7 @@ export function createPositionColumns(
     // Actions column
     {
       id: "actions",
-      cell: ({ row }) => <PositionRowActions row={row} />,
+      cell: ({ row }) => <PositionRowActions row={row} onEditProportion={onEditProportion} />,
     },
   ];
 }

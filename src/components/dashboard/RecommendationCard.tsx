@@ -21,28 +21,27 @@ export function RecommendationCard({ recommendation, onClick }: RecommendationCa
 
   return (
     <div
-      className="p-4 rounded-lg border border-border bg-card min-h-[120px] flex flex-col justify-between cursor-pointer hover:border-coral transition-colors shadow-sm"
+      className="p-4 rounded-lg border border-border bg-muted/50 hover:bg-muted transition-colors cursor-pointer shadow-sm"
       onClick={onClick}
     >
-      <Badge variant={isBuy ? "success" : "error"}>{action}</Badge>
-      <div>
-        <p className="text-lg font-bold mt-2 text-text-primary">{ticker}</p>
-        <p className="text-xs text-text-secondary mt-1 mb-1.5">
-          <span className="font-semibold text-text-primary">
-            Qty: {isBuy ? "+" : "-"}
-            {Math.abs(quantity)}
-          </span>
-          <br />
-          {reason}
-        </p>
-      </div>
-      <Badge variant="coral">
-        {type === "rebalance"
-          ? "Rebalance"
-          : type === "target"
-          ? "Target"
-          : "Risk"}
-      </Badge>
+      <span
+        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
+          isBuy
+            ? "bg-success/10 text-success border border-success/20"
+            : "bg-error/10 text-error border border-error/20"
+        }`}
+      >
+        {action}
+      </span>
+      <p className="text-lg font-bold mt-2 text-text-primary">{ticker}</p>
+      <p className="text-xs text-text-secondary mt-1">
+        <span className="font-semibold text-text-primary">
+          Qty: {isBuy ? "+" : ""}
+          {quantity}
+        </span>
+        <br />
+        {reason}
+      </p>
     </div>
   );
 }

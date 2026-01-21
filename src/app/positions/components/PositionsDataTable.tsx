@@ -26,16 +26,19 @@ import {
 } from "@/components/ui/table";
 import { DataTablePagination } from "@/components/data-table/DataTablePagination";
 import { DataTableToolbar } from "@/components/data-table/DataTableToolbar";
+import { TablePosition } from "@/types/position";
+import { EditTargetProportionDialog } from "./dialogs/EditTargetProportionDialog";
+import { createPositionColumns } from "./columns/position-columns";
 
-interface PositionsDataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+interface PositionsDataTableProps {
+  data: TablePosition[];
+  onRefresh?: () => void;
 }
 
-export function PositionsDataTable<TData, TValue>({
-  columns,
+export function PositionsDataTable({
   data,
-}: PositionsDataTableProps<TData, TValue>) {
+  onRefresh,
+}: PositionsDataTableProps) {
   // Table state
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -44,6 +47,21 @@ export function PositionsDataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+
+  // Modal state for editing target proportion
+  const [editProportionModal, setEditProportionModal] =
+    React.useState<TablePosition | null>(null);
+
+  // Handler for editing target proportion
+  const handleEditProportion = React.useCallback((position: TablePosition) => {
+    setEditProportionModal(position);
+  }, []);
+
+  // Create columns with handlers
+  const columns = React.useMemo(
+    () => createPositionColumns(onRefresh || (() => {}), handleEditProportion),
+    [onRefresh, handleEditProportion]
+  );
 
   // Initialize table
   const table = useReactTable({
@@ -145,6 +163,17 @@ export function PositionsDataTable<TData, TValue>({
 
       {/* Pagination */}
       <DataTablePagination table={table} />
+
+      {/* Edit Target Proportion Modal */}
+      <EditTargetProportionDialog
+        isOpen={!!editProportionModal}
+        onClose={() => setEditProportionModal(null)}
+        position={editProportionModal}
+        onSave={async () => {
+          setEditProportionModal(null);
+          if (onRefresh) onRefresh();
+        }}
+      />
     </div>
   );
 }

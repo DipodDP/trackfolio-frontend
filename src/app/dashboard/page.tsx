@@ -28,7 +28,7 @@ import { StructureTable } from "@/components/portfolio/StructureTable";
 import { PortfolioSummary } from "@/components/portfolio/PortfolioSummary"; // Placeholder needed
 
 import { formatMoneyValue, moneyValueToNumber } from "@/lib/utils/money";
-import { quotationToNumber } from "@/utils/formatters"; // Import quotationToNumber
+import { quotationToNumber, formatPercent } from "@/utils/formatters"; // Import quotationToNumber and formatPercent
 import { MoneyValue } from "@/types/portfolio"; // Import MoneyValue type
 
 export default function DashboardPage() {
@@ -143,46 +143,54 @@ export default function DashboardPage() {
       current: [
         {
           label: "Shares",
-          value: parseFloat(structure_analysis.current_high_risk.component_proportions.shares || '0'),
+          value: parseFloat(structure_analysis.current_high_risk.component_proportions.shares || '0') * 100,
           color: "bg-primary",
-        },
-        {
-          label: "Bonds",
-          value: parseFloat(structure_analysis.current_low_risk.component_proportions.corp_bonds || '0'),
-          color: "bg-coral",
+          riskType: 'high' as const,
         },
         {
           label: "ETFs",
-          value: parseFloat(structure_analysis.current_high_risk.component_proportions.etf || '0'),
-          color: "bg-success",
+          value: parseFloat(structure_analysis.current_high_risk.component_proportions.etf || '0') * 100,
+          color: "bg-coral",
+          riskType: 'high' as const,
+        },
+        {
+          label: "Bonds",
+          value: parseFloat(structure_analysis.current_low_risk.component_proportions.corp_bonds || '0') * 100,
+          color: "bg-warning",
+          riskType: 'low' as const,
         },
         {
           label: "Gov Bonds",
-          value: parseFloat(structure_analysis.current_low_risk.component_proportions.gov_bonds || '0'),
-          color: "bg-warning",
+          value: parseFloat(structure_analysis.current_low_risk.component_proportions.gov_bonds || '0') * 100,
+          color: "bg-success",
+          riskType: 'low' as const,
         },
       ],
       target: structure_analysis.plan_high_risk && structure_analysis.plan_low_risk
         ? [
             {
               label: "Shares",
-              value: parseFloat(structure_analysis.plan_high_risk.component_proportions.shares || '0'),
+              value: parseFloat(structure_analysis.plan_high_risk.component_proportions.shares || '0') * 100,
               color: "bg-primary",
-            },
-            {
-              label: "Bonds",
-              value: parseFloat(structure_analysis.plan_low_risk.component_proportions.corp_bonds || '0'),
-              color: "bg-coral",
+              riskType: 'high' as const,
             },
             {
               label: "ETFs",
-              value: parseFloat(structure_analysis.plan_high_risk.component_proportions.etf || '0'),
-              color: "bg-success",
+              value: parseFloat(structure_analysis.plan_high_risk.component_proportions.etf || '0') * 100,
+              color: "bg-coral",
+              riskType: 'high' as const,
+            },
+            {
+              label: "Bonds",
+              value: parseFloat(structure_analysis.plan_low_risk.component_proportions.corp_bonds || '0') * 100,
+              color: "bg-warning",
+              riskType: 'low' as const,
             },
             {
               label: "Gov Bonds",
-              value: parseFloat(structure_analysis.plan_low_risk.component_proportions.gov_bonds || '0'),
-              color: "bg-warning",
+              value: parseFloat(structure_analysis.plan_low_risk.component_proportions.gov_bonds || '0') * 100,
+              color: "bg-success",
+              riskType: 'low' as const,
             },
           ]
         : [],
@@ -341,16 +349,16 @@ export default function DashboardPage() {
           userName={user?.username || "User"}
         />
 
-        <main className="container-app py-12 md:py-16">
+        <main className="container-app py-8 md:py-12">
           <HeroSection />
 
           {/* Summary Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
             <StatCard
               title="Total Portfolio Value"
               value={formatMoneyValue(analysis.consolidated_portfolio.total_amount_portfolio)}
               change={{
-                value: `${plPercentage >= 0 ? "+" : ""}${plPercentage.toFixed(2)}%`,
+                value: `${plPercentage.toFixed(2)}%`,
                 isPositive: plPercentage >= 0,
               }}
               accentColor="primary"
@@ -374,60 +382,148 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Structure Section */}
-          <section className="mt-8">
-            <h1 className="text-2xl font-bold mb-4">Structure</h1>
-            <StructureTable data={analysis.structure_analysis} />
-          </section>
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Left Column - Main Content */}
+            <div className="lg:col-span-8 space-y-6">
+              {/* Risk Allocation with embedded Structure Table */}
+              <Card>
+                <h2 className="text-lg font-semibold text-text-primary mb-4">
+                  Risk Allocation
+                </h2>
 
-          {/* Portfolio Summary Section */}
-          <section className="mt-8">
-            <h3 className="text-lg font-semibold mb-2">Portfolio summary</h3>
-            <PortfolioSummary
-              consolidated={analysis.consolidated_portfolio}
-              totalCash={analysis.total_additional_cash}
-              assetProportions={analysis.proportion_in_portfolio}
-            />
-          </section>
+                {/* Risk Parts Summary - Above bars with visual connection */}
+                {(() => {
+                  // Calculate widths from actual bar segments
+                  const sharesWidth = allocationSegments.current.find(s => s.label === "Shares")?.value || 0;
+                  const etfsWidth = allocationSegments.current.find(s => s.label === "ETFs")?.value || 0;
+                  const bondsWidth = allocationSegments.current.find(s => s.label === "Bonds")?.value || 0;
+                  const govBondsWidth = allocationSegments.current.find(s => s.label === "Gov Bonds")?.value || 0;
 
-          {/* Portfolio Table Section */}
-          <section className="mt-8">
-            <h1 className="text-2xl font-bold mb-4">Portfolio</h1>
-            <PortfolioTable
-              enrichedPositions={enrichedPositions}
-              planPositions={planPositions}
-            />
-          </section>
+                  const highRiskWidth = sharesWidth + etfsWidth;
+                  const lowRiskWidth = bondsWidth + govBondsWidth;
 
-          {/* Main Content Grid - Recommendations & Quick Actions */}
-          <div className="grid grid-cols-12 gap-6 mt-8">
-            {/* Right Column - Recommendations & Quick Actions */}
-            <div className="col-span-12 lg:col-span-4 space-y-6">
-              {/* Rebalancing Recommendations */}
-              {recommendations.length > 0 && (
-                <Card>
-                  <h2 className="text-lg font-semibold text-primary-text mb-4">
-                    Rebalancing Recommendations
-                  </h2>
-                  <RecommendationsGrid
-                    recommendations={recommendations}
-                    onRecommendationClick={(rec) =>
-                      console.log("Clicked recommendation:", rec)
-                    }
-                    data-testid="recommendation-card"
+                  return (
+                    <div className="flex items-center space-x-4 mb-0">
+                      <span className="w-32"></span>
+                      <div className="flex-1 flex flex-col">
+                        {/* Label cards aligned to proportions */}
+                        <div className="flex gap-[2px] mb-0">
+                          <div
+                            className="flex items-center justify-between p-2 px-3 bg-primary/10 border border-primary/30 rounded-t-lg min-w-0 flex-shrink"
+                            style={{ width: `${highRiskWidth}%` }}
+                          >
+                            <span className="text-xs font-medium text-text-secondary uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">High Risk</span>
+                            <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                              <span className="font-semibold text-text-primary text-sm whitespace-nowrap">
+                                {formatPercent(analysis.structure_analysis.current_high_risk.proportion_in_portfolio)}
+                              </span>
+                              {analysis.structure_analysis.plan_high_risk && (
+                                <span className="text-xs text-text-secondary whitespace-nowrap">
+                                  → {formatPercent(analysis.structure_analysis.plan_high_risk.proportion_in_portfolio)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div
+                            className="flex items-center justify-between p-2 px-3 bg-success/10 border border-success/30 rounded-t-lg min-w-fit flex-grow"
+                            style={{ width: `${lowRiskWidth}%` }}
+                          >
+                            <span className="text-xs font-medium text-text-secondary uppercase tracking-wide whitespace-nowrap">Low Risk</span>
+                            <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                              <span className="font-semibold text-text-primary text-sm whitespace-nowrap">
+                                {formatPercent(analysis.structure_analysis.current_low_risk.proportion_in_portfolio)}
+                              </span>
+                              {analysis.structure_analysis.plan_low_risk && (
+                                <span className="text-xs text-text-secondary whitespace-nowrap">
+                                  → {formatPercent(analysis.structure_analysis.plan_low_risk.proportion_in_portfolio)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        {/* Connector strips aligned to bar segments */}
+                        <div className="flex gap-[2px]">
+                          <div
+                            className="h-2 bg-primary/20 border-l border-r border-primary/30"
+                            style={{ width: `${highRiskWidth}%`, minWidth: '16px' }}
+                          ></div>
+                          <div
+                            className="h-2 bg-success/20 border-l border-r border-success/30"
+                            style={{ width: `${lowRiskWidth}%`, minWidth: '16px' }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <div className="space-y-4">
+                  <AllocationBar
+                    label="Current Allocation"
+                    segments={allocationSegments.current}
                   />
-                </Card>
-              )}
+                  <AllocationBar
+                    label="Target Allocation"
+                    segments={allocationSegments.target}
+                  />
+                </div>
+
+                <AllocationLegend items={legendItems} />
+
+                {/* Embedded Structure Table */}
+                <div className="mt-6">
+                  <StructureTable data={analysis.structure_analysis} />
+                </div>
+              </Card>
+
+              {/* Portfolio Summary */}
+              <Card>
+                <h2 className="text-lg font-semibold text-text-primary mb-4">
+                  Portfolio Summary
+                </h2>
+                <PortfolioSummary
+                  consolidated={analysis.consolidated_portfolio}
+                  totalCash={analysis.total_additional_cash}
+                  assetProportions={analysis.proportion_in_portfolio}
+                />
+              </Card>
+            </div>
+
+            {/* Right Column - Recommendations & Quick Actions */}
+            <div className="lg:col-span-4 space-y-6">
+              {/* Rebalancing Recommendations */}
+              <Card>
+                <h2 className="text-lg font-semibold text-text-primary mb-4">
+                  Rebalancing Recommendations
+                </h2>
+                <RecommendationsGrid
+                  recommendations={recommendations}
+                  onRecommendationClick={(rec) =>
+                    console.log("Clicked recommendation:", rec)
+                  }
+                  data-testid="recommendation-card"
+                />
+              </Card>
 
               {/* Quick Actions */}
               <Card>
-                <h2 className="text-lg font-semibold text-primary-text mb-4">
+                <h2 className="text-lg font-semibold text-text-primary mb-4">
                   Quick Actions
                 </h2>
                 <QuickActions />
               </Card>
             </div>
           </div>
+
+          {/* Full-Width Portfolio Positions */}
+          <section className="mt-6">
+            <h2 className="text-lg font-semibold text-text-primary mb-4">Portfolio Positions</h2>
+            <PortfolioTable
+              enrichedPositions={enrichedPositions}
+              planPositions={planPositions}
+            />
+          </section>
 
           {/* Data Freshness Footer */}
           <DataFreshness

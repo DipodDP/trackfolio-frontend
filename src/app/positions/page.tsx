@@ -9,7 +9,6 @@ import { useAuthStore } from "@/store/authStore";
 import apiClient from "@/lib/api-client";
 import type { FullPortfolioAnalysisResponse as PortfolioAnalysisResponse } from "@/types/portfolio";
 import { transformToTableFormat } from "@/lib/utils/position";
-import { createPositionColumns } from "./components/columns/position-columns";
 import { Skeleton } from "@/components/ui";
 import { PositionsDataTable } from "./components/PositionsDataTable";
 import { DataFreshness } from "@/components/dashboard";
@@ -84,9 +83,6 @@ export default function PositionsPage() {
           portfolioData.plan_positions
         )
       : [];
-
-  // Create columns with refresh callback
-  const columns = createPositionColumns(handleRefresh);
 
   // Show empty state if no accounts selected
   if (!selectedApiClientId || selectedAccountIds.length === 0) {
@@ -237,7 +233,7 @@ export default function PositionsPage() {
 
             {/* Positions table */}
             <div className="card p-6">
-              <PositionsDataTable columns={columns} data={tableData} />
+              <PositionsDataTable data={tableData} onRefresh={handleRefresh} />
             </div>
           </div>
           <DataFreshness

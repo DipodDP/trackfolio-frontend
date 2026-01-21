@@ -1,7 +1,6 @@
 "use client";
 
 import { Row } from "@tanstack/react-table";
-import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import {
   DropdownMenu,
@@ -14,19 +13,15 @@ import { TablePosition } from "@/types/position";
 
 interface PositionRowActionsProps {
   row: Row<TablePosition>;
+  onEditProportion?: (position: TablePosition) => void;
 }
 
-export function PositionRowActions({ row }: PositionRowActionsProps) {
+export function PositionRowActions({ row, onEditProportion }: PositionRowActionsProps) {
   const position = row.original;
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const handleCopyTicker = () => {
     navigator.clipboard.writeText(position.ticker);
     // TODO: Add toast notification
-  };
-
-  const handleEdit = () => {
-    setIsEditDialogOpen(true);
   };
 
   return (
@@ -43,9 +38,9 @@ export function PositionRowActions({ row }: PositionRowActionsProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[160px]">
-          <DropdownMenuItem onClick={handleEdit}>
+          <DropdownMenuItem onClick={() => onEditProportion?.(position)}>
             <span className="material-symbols-outlined text-sm mr-2">edit</span>
-            Edit Targets
+            Edit Target Proportion
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleCopyTicker}>
             <span className="material-symbols-outlined text-sm mr-2">
@@ -62,13 +57,6 @@ export function PositionRowActions({ row }: PositionRowActionsProps) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      {/* TODO: Add PositionEditDialog component */}
-      {/* <PositionEditDialog
-        position={position}
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-      /> */}
     </>
   );
 }
