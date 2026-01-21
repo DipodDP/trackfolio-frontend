@@ -5,16 +5,9 @@ import {
   TableRow,
   TableHead,
   TableBody,
-  TableCell
+  TableCell,
 } from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem
-} from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/Badge';
 import {
   Dialog,
   DialogContent,
@@ -23,14 +16,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/Progress';
+import Button from '@/components/ui/Button';
 
 import { EnrichedPosition, PlanPosition } from '@/types/portfolio';
 import {
   formatMoneyValue,
   formatQuotation,
   formatPercent,
-  getProfitColorClass
 } from '@/utils/formatters';
+import {
+  formatProfitDisplay,
+  formatInstrumentType,
+} from '@/lib/utils/position';
 
 interface PortfolioTableProps {
   enrichedPositions: EnrichedPosition[];
@@ -41,7 +39,7 @@ interface PortfolioTableProps {
 export function PortfolioTable({
   enrichedPositions,
   planPositions,
-  onSort
+  onSort,
 }: PortfolioTableProps) {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,7 +57,10 @@ export function PortfolioTable({
     [planPositions]
   );
 
-  const handleProportionClick = (position: EnrichedPosition, plan: PlanPosition | undefined) => {
+  const handleProportionClick = (
+    position: EnrichedPosition,
+    plan: PlanPosition | undefined
+  ) => {
     if (!plan) return;
 
     setSelectedPosition({
@@ -68,7 +69,9 @@ export function PortfolioTable({
       currentProportion: position.proportion_in_portfolio,
       targetProportion: plan.plan_proportion_in_portfolio,
     });
-    setEditedProportion((parseFloat(plan.plan_proportion_in_portfolio) * 100).toFixed(2));
+    setEditedProportion(
+      (parseFloat(plan.plan_proportion_in_portfolio) * 100).toFixed(2)
+    );
     setIsModalOpen(true);
   };
 
@@ -79,53 +82,86 @@ export function PortfolioTable({
   };
 
   return (
-    <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="space-y-4">
+      <div className="rounded-lg border border-border/50 bg-card">
         <Table>
           <TableHeader>
-            <TableRow className="border-b border-border">
-              <TableHead className="font-bold text-text-secondary">Ticker</TableHead>
-              <TableHead className="font-bold text-text-secondary">Name</TableHead>
-              <TableHead className="font-bold text-text-secondary text-right">Price</TableHead>
-              <TableHead className="font-bold text-text-secondary text-right">Quantity</TableHead>
-              <TableHead className="font-bold text-text-secondary text-right">Total</TableHead>
-              <TableHead className="font-bold text-text-secondary text-right">Plan Total</TableHead>
-              <TableHead className="font-bold text-text-secondary text-right">Proportion</TableHead>
-              <TableHead className="font-bold text-text-secondary text-right">Profit</TableHead>
-              <TableHead className="font-bold text-text-secondary">Target Progress</TableHead>
+            <TableRow>
+              <TableHead className="text-primary-text">Ticker</TableHead>
+              <TableHead className="text-primary-text">Name</TableHead>
+              <TableHead className="text-primary-text text-right">
+                Price
+              </TableHead>
+              <TableHead className="text-primary-text text-right">
+                Quantity
+              </TableHead>
+              <TableHead className="text-primary-text text-right">
+                Total
+              </TableHead>
+              <TableHead className="text-primary-text text-right">
+                Plan Total
+              </TableHead>
+              <TableHead className="text-primary-text text-right">
+                Proportion
+              </TableHead>
+              <TableHead className="text-primary-text text-right">
+                Profit
+              </TableHead>
+              <TableHead className="text-primary-text">
+                Target Progress
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {enrichedPositions.map(position => {
               const plan = planLookup.get(position.figi);
-              const targetProgress = plan ? parseFloat(plan.target_progress) * 100 : 0;
+              const targetProgress = plan
+                ? parseFloat(plan.target_progress) * 100
+                : 0;
+              const profitDisplay = formatProfitDisplay(
+                parseFloat(position.profit_fifo)
+              );
+              const instrumentType = formatInstrumentType(
+                position.instrument_type
+              );
 
               return (
-                <TableRow key={position.figi} className="group hover:bg-muted/50 border-b border-border/50 last:border-0">
-                  <TableCell className="py-3">
+                <TableRow
+                  key={position.figi}
+                  className="hover:bg-muted/50"
+                >
+                  <TableCell>
                     <div className="flex items-center gap-2">
-                      <span className="text-text-primary font-medium">{position.ticker}</span>
-                      <Badge variant="outline" className="text-xs border-border bg-muted text-text-secondary">
-                        {position.instrument_type}
+                      <span className="text-primary-text font-medium">
+                        {position.ticker}
+                      </span>
+                      <Badge
+                        className={`${instrumentType.color} text-white text-xs px-2 py-0.5`}
+                      >
+                        {instrumentType.label}
                       </Badge>
                     </div>
                   </TableCell>
-                  <TableCell className="py-3 text-text-primary">{position.name}</TableCell>
-                  <TableCell className="py-3 text-right text-text-primary">
+                  <TableCell className="text-primary-text">
+                    {position.name}
+                  </TableCell>
+                  <TableCell className="text-right text-primary-text">
                     {formatMoneyValue(position.current_price)}
                   </TableCell>
-                  <TableCell className="py-3 text-right text-text-primary">
+                  <TableCell className="text-right text-primary-text">
                     {formatQuotation(position.quantity)}
                   </TableCell>
-                  <TableCell className="py-3 text-right text-text-primary font-medium">
+                  <TableCell className="text-right text-primary-text font-medium">
                     {formatMoneyValue(position.total)}
                   </TableCell>
-                  <TableCell className="py-3 text-right text-text-secondary">
+                  <TableCell className="text-right text-secondary-text">
                     {plan ? formatMoneyValue(plan.plan_total) : '-'}
                   </TableCell>
-                  <TableCell className="py-3 text-right text-text-primary">
+                  <TableCell className="text-right text-primary-text">
                     <div className="flex flex-col gap-1.5 items-end">
-                      <span className="font-medium">{formatPercent(position.proportion_in_portfolio)}</span>
+                      <span className="font-medium">
+                        {formatPercent(position.proportion_in_portfolio)}
+                      </span>
                       {plan && (
                         <button
                           type="button"
@@ -138,21 +174,25 @@ export function PortfolioTable({
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className={`py-3 text-right font-medium ${getProfitColorClass(position.profit_fifo)}`}>
-                    {position.profit_fifo.startsWith('-') ? '▼' : '▲'} {formatPercent(position.profit_fifo)}
+                  <TableCell
+                    className={`text-right font-medium ${profitDisplay.color}`}
+                  >
+                    <div className="flex items-center justify-end gap-1">
+                      <span className="material-symbols-outlined text-sm">
+                        {profitDisplay.icon}
+                      </span>
+                      <span>{profitDisplay.text}</span>
+                    </div>
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell>
                     {plan && (
-                      <div className="flex items-center gap-2 w-32">
-                        <div className="h-3 border border-border rounded-full w-full bg-muted overflow-hidden">
-                          <div
-                            className="h-full bg-primary transition-all duration-300"
-                            style={{ width: `${Math.min(targetProgress, 100)}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-text-secondary whitespace-nowrap">
-                          {targetProgress.toFixed(0)}%
-                        </span>
+                      <div className="w-32">
+                        <Progress
+                          value={targetProgress}
+                          color={targetProgress >= 0 ? 'success' : 'coral'}
+                          showLabel
+                          size="sm"
+                        />
                       </div>
                     )}
                   </TableCell>
@@ -169,20 +209,25 @@ export function PortfolioTable({
           <DialogHeader>
             <DialogTitle>Edit Target Proportion</DialogTitle>
             <DialogDescription>
-              Adjust the target portfolio proportion for {selectedPosition?.ticker} ({selectedPosition?.name})
+              Adjust the target portfolio proportion for{' '}
+              {selectedPosition?.ticker} ({selectedPosition?.name})
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-text-primary">
+              <label className="text-sm font-medium text-primary-text">
                 Current Proportion
               </label>
-              <div className="text-lg font-semibold text-text-secondary">
-                {selectedPosition && formatPercent(selectedPosition.currentProportion)}
+              <div className="text-lg font-semibold text-secondary-text">
+                {selectedPosition &&
+                  formatPercent(selectedPosition.currentProportion)}
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-text-primary" htmlFor="target-proportion">
+              <label
+                className="text-sm font-medium text-primary-text"
+                htmlFor="target-proportion"
+              >
                 Target Proportion (%)
               </label>
               <input
@@ -192,24 +237,16 @@ export function PortfolioTable({
                 min="0"
                 max="100"
                 value={editedProportion}
-                onChange={(e) => setEditedProportion(e.target.value)}
+                onChange={e => setEditedProportion(e.target.value)}
                 className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-primary"
               />
             </div>
           </div>
           <DialogFooter>
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
-            >
+            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>
               Cancel
-            </button>
-            <button
-              onClick={handleSaveProportion}
-              className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
-            >
-              Save Changes
-            </button>
+            </Button>
+            <Button onClick={handleSaveProportion}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

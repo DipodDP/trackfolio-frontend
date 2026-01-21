@@ -4,14 +4,18 @@ import { useState } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/Badge";
+import { Progress } from "@/components/ui/Progress";
 import { DataTableColumnHeader } from "@/components/data-table/DataTableColumnHeader";
 import { TablePosition } from "@/types/position";
-import { formatMoneyValue } from "@/lib/utils/money";
+import {
+  formatMoneyValue,
+  formatPercent,
+  formatQuotation,
+} from "@/utils/formatters";
 import {
   formatProfitDisplay,
   formatInstrumentType,
 } from "@/lib/utils/position";
-import { formatPercent } from "@/utils/formatters";
 import { PositionRowActions } from "../row-actions/PositionRowActions";
 import { OrderDialog } from "../dialogs/OrderDialog";
 
@@ -54,37 +58,36 @@ export function createPositionColumns(
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Ticker" />
       ),
-      cell: ({ row }) => (
-        <div className="w-[80px] font-mono font-semibold text-primary-text">
-          {row.getValue("ticker")}
-        </div>
-      ),
-      enableSorting: true,
-      enableHiding: false,
-    },
-
-    // Name column with instrument type badge
-    {
-      accessorKey: "name",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
-      ),
       cell: ({ row }) => {
-        const instrumentType = formatInstrumentType(row.original.instrument_type);
-
+        const instrumentType = formatInstrumentType(
+          row.original.instrument_type
+        );
         return (
-          <div className="flex items-center space-x-2 max-w-[300px]">
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-primary-text">
+              {row.getValue("ticker")}
+            </span>
             <Badge
               className={`${instrumentType.color} text-white text-xs px-2 py-0.5`}
             >
               {instrumentType.label}
             </Badge>
-            <span className="truncate font-medium text-primary-text">
-              {row.getValue("name")}
-            </span>
           </div>
         );
       },
+      enableSorting: true,
+      enableHiding: false,
+    },
+
+    // Name column
+    {
+      accessorKey: "name",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Name" />
+      ),
+      cell: ({ row }) => (
+        <span className="text-primary-text">{row.getValue("name")}</span>
+      ),
       enableSorting: true,
     },
 
@@ -92,16 +95,17 @@ export function createPositionColumns(
     {
       accessorKey: "current_price",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Price" />
+        <DataTableColumnHeader
+          column={column}
+          title="Price"
+          className="text-right"
+        />
       ),
-      cell: ({ row }) => {
-        const currency = row.original.current_price.currency;
-        return (
-          <div className="text-right font-medium text-primary-text w-[100px]">
-            {formatMoneyValue(row.original.current_price, { decimals: 2, currency: currency })}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="text-right text-primary-text">
+          {formatMoneyValue(row.original.current_price)}
+        </div>
+      ),
       enableSorting: true,
     },
 
@@ -109,16 +113,20 @@ export function createPositionColumns(
     {
       accessorKey: "quantity",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Qty" />
+        <DataTableColumnHeader
+          column={column}
+          title="Quantity"
+          className="text-right"
+        />
       ),
-      cell: ({ row }) => {
-        const quantity = row.getValue<number>("quantity");
-        return (
-          <div className="text-right font-medium text-primary-text w-[80px]">
-            {typeof quantity === "number" ? quantity.toFixed(0) : ""}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="text-right text-primary-text">
+          {formatQuotation({
+            units: row.original.quantity,
+            nano: 0,
+          })}
+        </div>
+      ),
       enableSorting: true,
     },
 
@@ -126,16 +134,17 @@ export function createPositionColumns(
     {
       accessorKey: "total",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Total" />
+        <DataTableColumnHeader
+          column={column}
+          title="Total"
+          className="text-right"
+        />
       ),
-      cell: ({ row }) => {
-        const currency = row.original.total.currency;
-        return (
-          <div className="text-right font-semibold text-primary-text w-[120px]">
-            {formatMoneyValue(row.original.total, { decimals: 2, currency: currency })}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="text-right font-medium text-primary-text">
+          {formatMoneyValue(row.original.total)}
+        </div>
+      ),
       enableSorting: true,
     },
 
@@ -143,17 +152,19 @@ export function createPositionColumns(
     {
       accessorKey: "plan_total",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Plan Total" />
+        <DataTableColumnHeader
+          column={column}
+          title="Plan Total"
+          className="text-right"
+        />
       ),
-      cell: ({ row }) => {
-        const planTotal = row.original.plan_total;
-        const currency = row.original.plan_total.currency;
-        return (
-          <div className="text-right font-medium text-secondary-text w-[120px]">
-            {formatMoneyValue(planTotal, { decimals: 2, currency: currency })}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="text-right text-secondary-text">
+          {row.original.plan_total
+            ? formatMoneyValue(row.original.plan_total)
+            : "-"}
+        </div>
+      ),
       enableSorting: true,
     },
 
@@ -161,27 +172,33 @@ export function createPositionColumns(
     {
       accessorKey: "proportion_in_portfolio",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Proportion" />
+        <DataTableColumnHeader
+          column={column}
+          title="Proportion"
+          className="text-right"
+        />
       ),
       cell: ({ row }) => {
-        const currentProportion = row.getValue<number>("proportion_in_portfolio");
+        const currentProportion = row.getValue<number>(
+          "proportion_in_portfolio"
+        );
         const planProportion = row.original.plan_proportion_in_portfolio;
 
         return (
-          <div className="text-right w-[100px]">
-            <div className="flex flex-col gap-1.5 items-end">
-              <span className="font-medium">{formatPercent(currentProportion)}</span>
-              {planProportion > 0 && (
-                <button
-                  type="button"
-                  onClick={() => onEditProportion(row.original)}
-                  className="px-2 py-0.5 text-xs font-medium bg-card hover:bg-card/80 border border-border hover:border-border/80 rounded text-text-secondary hover:text-text-primary transition-all"
-                  title="Click to edit target proportion"
-                >
-                  → {formatPercent(planProportion)}
-                </button>
-              )}
-            </div>
+          <div className="flex flex-col gap-1.5 items-end">
+            <span className="font-medium">
+              {formatPercent(currentProportion)}
+            </span>
+            {planProportion != null && (
+              <button
+                type="button"
+                onClick={() => onEditProportion(row.original)}
+                className="px-2 py-0.5 text-xs font-medium bg-card hover:bg-card/80 border border-border hover:border-border/80 rounded text-text-secondary hover:text-text-primary transition-all"
+                title="Click to edit target proportion"
+              >
+                → {formatPercent(planProportion)}
+              </button>
+            )}
           </div>
         );
       },
@@ -192,7 +209,11 @@ export function createPositionColumns(
     {
       accessorKey: "profit_fifo",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Profit" />
+        <DataTableColumnHeader
+          column={column}
+          title="Profit"
+          className="text-right"
+        />
       ),
       cell: ({ row }) => {
         const profitFifo = row.getValue<number | undefined>("profit_fifo");
@@ -202,12 +223,12 @@ export function createPositionColumns(
 
         return (
           <div
-            className={`flex items-center justify-end gap-1 min-w-[100px] ${profitDisplay.color}`}
+            className={`flex items-center justify-end gap-1 font-medium ${profitDisplay.color}`}
           >
             <span className="material-symbols-outlined text-sm">
               {profitDisplay.icon}
             </span>
-            <span className="font-semibold">{profitDisplay.text}</span>
+            <span>{profitDisplay.text}</span>
           </div>
         );
       },
@@ -221,41 +242,23 @@ export function createPositionColumns(
         <DataTableColumnHeader column={column} title="Target Progress" />
       ),
       cell: ({ row }) => {
-        const targetProgress = row.getValue<number | null>("target_progress");
+        const targetProgress =
+          row.original.target_progress != null
+            ? row.original.target_progress * 100
+            : null;
 
         if (targetProgress === null) {
-          return (
-            <div className="text-right text-secondary-text w-[120px]">N/A</div>
-          );
+          return null;
         }
 
-        const percentage =
-          typeof targetProgress === "number"
-            ? (targetProgress * 100).toFixed(2)
-            : "0.00";
-        const isPositive = targetProgress >= 0;
-
         return (
-          <div className="w-[120px]">
-            <div className="flex items-center justify-end gap-2">
-              <div className="flex-1 h-2 bg-card-foreground/10 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${
-                    isPositive ? "bg-success" : "bg-coral"
-                  } transition-all`}
-                  style={{
-                    width: `${Math.min(Math.abs(targetProgress) * 100, 100)}%`,
-                  }}
-                />
-              </div>
-              <span
-                className={`text-xs font-medium ${
-                  isPositive ? "text-success" : "text-coral"
-                }`}
-              >
-                {percentage}%
-              </span>
-            </div>
+          <div className="w-32">
+            <Progress
+              value={targetProgress}
+              color={targetProgress >= 0 ? "success" : "coral"}
+              showLabel
+              size="sm"
+            />
           </div>
         );
       },
@@ -274,9 +277,7 @@ export function createPositionColumns(
         const [isDialogOpen, setIsDialogOpen] = useState(false);
 
         if (toBuyLots === 0) {
-          return (
-            <div className="text-center text-secondary-text w-[80px]">-</div>
-          );
+          return <div className="text-center text-secondary-text">-</div>;
         }
 
         const isBuy = toBuyLots > 0;
@@ -285,7 +286,7 @@ export function createPositionColumns(
 
         return (
           <>
-            <div className="text-center w-[80px]">
+            <div className="text-center">
               <button
                 onClick={() => setIsDialogOpen(true)}
                 className="inline-block transition-transform hover:scale-105 active:scale-95"
@@ -318,7 +319,10 @@ export function createPositionColumns(
     // Actions column
     {
       id: "actions",
-      cell: ({ row }) => <PositionRowActions row={row} onEditProportion={onEditProportion} />,
+      cell: ({ row }) => (
+        <PositionRowActions row={row} onEditProportion={onEditProportion} />
+      ),
     },
   ];
 }
+
