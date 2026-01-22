@@ -96,13 +96,13 @@ export default function PositionsPage() {
 
           <main className="container-app py-12">
             <div className="card p-8 text-center max-w-2xl mx-auto">
-              <span className="material-symbols-outlined text-6xl text-secondary-text mb-4">
+              <span className="material-symbols-outlined text-6xl text-secondary4">
                 inventory_2
               </span>
-              <h2 className="text-2xl font-display text-primary-text mb-4">
+              <h2 className="text-2xl font-display text-primary mb-4">
                 No Accounts Selected
               </h2>
-              <p className="text-secondary-text mb-6">
+              <p className="text-secondary6">
                 Please connect a broker and select accounts to view your
                 positions.
               </p>
@@ -168,10 +168,10 @@ export default function PositionsPage() {
                   error
                 </span>
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-primary-text mb-2">
+                  <h3 className="text-xl font-bold text-primary mb-2">
                     Error Loading Positions
                   </h3>
-                  <p className="text-secondary-text mb-4">{error}</p>
+                  <p className="text-secondary4">{error}</p>
                   <div className="flex gap-4">
                     <button onClick={handleRefresh} className="btn btn-primary">
                       <span className="material-symbols-outlined">refresh</span>
@@ -207,10 +207,10 @@ export default function PositionsPage() {
             {/* Page header */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-4xl font-display text-primary tracking-wider mb-2">
+                <h1 className="text-h2 font-display text-primary tracking-wider mb-2">
                   POSITIONS
                 </h1>
-                <p className="text-secondary-text">
+                <p className="text-secondary">
                   {tableData.length} positions • Last updated:{" "}
                   {lastUpdated?.toLocaleTimeString()}
                 </p>

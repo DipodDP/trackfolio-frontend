@@ -4,10 +4,10 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
       <div className="text-center space-y-8 max-w-2xl">
-        <h1 className="text-6xl md:text-8xl font-display text-primary tracking-wider">
+        <h1 className="text-display-lg md:text-display-xl font-display text-primary tracking-wider text-shadow">
           TRACKFOLIO
         </h1>
-        <p className="text-xl text-secondary-text">
+        <p className="text-xl text-secondary">
           Investment Portfolio Tracking & Sandbox Trading Analysis
         </p>
         <div className="flex gap-4 justify-center">

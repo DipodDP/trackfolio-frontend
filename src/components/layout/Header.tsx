@@ -48,7 +48,7 @@ export function Header({ isSandbox = false, onToggleSandbox, userName }: HeaderP
           <div className="flex items-center">
             <Link
               href="/dashboard"
-              className="font-display text-2xl tracking-brand text-primary-text hover:text-primary transition-colors"
+              className="font-display text-2xl tracking-wider text-primary hover:text-primary transition-colors"
             >
               TRACKFOLIO
             </Link>
@@ -64,8 +64,8 @@ export function Header({ isSandbox = false, onToggleSandbox, userName }: HeaderP
                   href={item.href}
                   className={`transition-colors duration-fast ${
                     isActive
-                      ? "text-primary-text"
-                      : "text-secondary-text hover:text-primary-text"
+                      ? "text-primary"
+                      : "text-secondary hover:text-primary"
                   }`}
                 >
                   {item.label}
@@ -114,12 +114,12 @@ export function Header({ isSandbox = false, onToggleSandbox, userName }: HeaderP
 
             {/* User Avatar & Logout */}
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-border-dark flex items-center justify-center text-primary-text font-bold text-sm" title={displayName}>
+              <div className="w-8 h-8 rounded-full bg-border flex items-center justify-center text-primary font-bold text-sm" title={displayName}>
                 {userInitial}
               </div>
               <button
                 onClick={handleLogout}
-                className="hidden md:flex items-center gap-1 text-secondary-text hover:text-primary-text transition-colors text-sm"
+                className="hidden md:flex items-center gap-1 text-secondary hover:text-primary transition-colors text-sm"
                 title="Logout"
               >
                 <span className="material-symbols-outlined text-xl">logout</span>

@@ -47,7 +47,7 @@ export function Progress({
         />
       </div>
       {showLabel && (
-        <span className="text-xs text-secondary-text min-w-[3ch] text-right">
+        <span className="text-xs text-secondary min-w-[3ch] text-right">
           {Math.round(percentage)}%
         </span>
       )}

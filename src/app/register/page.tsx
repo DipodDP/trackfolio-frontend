@@ -66,10 +66,10 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="card w-full max-w-md space-y-6">
         <div className="text-center">
-          <h1 className="text-4xl font-display text-primary tracking-wider mb-2">
+          <h1 className="text-h2 font-display text-primary tracking-wider mb-2">
             TRACKFOLIO
           </h1>
-          <p className="text-secondary-text">Create your account</p>
+          <p className="text-secondary">Create your account</p>
         </div>
 
         {error && (
@@ -141,7 +141,7 @@ export default function RegisterPage() {
               onChange={handleChange}
               placeholder="••••••••"
             />
-            <p className="text-xs text-secondary-text mt-1">
+            <p className="text-xs text-secondary mt-1">
               Ensure your password meets the security requirements.
             </p>
           </div>
@@ -174,7 +174,7 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <p className="text-center text-secondary-text text-sm">
+        <p className="text-center text-secondary text-sm">
           Already have an account?{" "}
           <Link href="/login" className="text-primary hover:underline">
             Sign in

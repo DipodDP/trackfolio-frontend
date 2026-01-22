@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import { Header, CosmicBackground } from "@/components/layout";
@@ -18,17 +18,24 @@ import {
 } from "@/components/dashboard";
 import { useAppStore } from "@/store/appStore";
 import { useAuthStore } from "@/store/authStore";
+import Link from "next/link";
+import { OrderDialog } from "@/app/positions/components/dialogs/OrderDialog";
+import { type TablePosition } from "@/types/position";
+import { mergePositionWithPlan } from "@/lib/utils/position";
+
 
 // New imports for portfolio analysis
 import { usePortfolioAnalysis } from "@/hooks/usePortfolioAnalysis";
 import { useApiClientId } from "@/hooks/useApiClientId";
 import { useSelectedAccountIds } from "@/hooks/useSelectedAccountIds";
+import { RiskBreakdown } from "@/components/dashboard/RiskBreakdown";
 import { PortfolioTable } from "@/components/portfolio/PortfolioTable";
 import { StructureTable } from "@/components/portfolio/StructureTable";
 import { PortfolioSummary } from "@/components/portfolio/PortfolioSummary"; // Placeholder needed
 
 import { formatMoneyValue, moneyValueToNumber } from "@/lib/utils/money";
 import { quotationToNumber, formatPercent } from "@/utils/formatters"; // Import quotationToNumber and formatPercent
+import { filterNonCurrencyPositions } from "@/lib/utils/position"; // Import filterNonCurrencyPositions
 import { MoneyValue } from "@/types/portfolio"; // Import MoneyValue type
 
 export default function DashboardPage() {
@@ -47,6 +54,19 @@ export default function DashboardPage() {
   } = usePortfolioAnalysis(apiClientId, selectedAccountIds);
 
   const isSandbox = true; // Hardcoded for now, can be state later
+
+  const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
+  const [selectedPositionForOrder, setSelectedPositionForOrder] = useState<{ position: TablePosition, recommendation: Recommendation } | null>(null);
+
+  const handleRecommendationClick = (rec: Recommendation) => {
+    const enrichedPos = enrichedPositions.find(p => p.ticker === rec.ticker);
+    const planPos = planPositions.find(p => p.ticker === rec.ticker);
+    if (enrichedPos) {
+      const tablePos = mergePositionWithPlan(enrichedPos, planPos);
+      setSelectedPositionForOrder({ position: tablePos, recommendation: rec });
+      setIsOrderDialogOpen(true);
+    }
+  };
 
   console.log("DashboardPage render - isLoading:", isLoading);
 
@@ -79,10 +99,13 @@ export default function DashboardPage() {
 
     const {
       consolidated_portfolio,
-      enriched_positions,
-      plan_positions,
+      enriched_positions: raw_enriched_positions,
+      plan_positions: raw_plan_positions,
       structure_analysis,
     } = analysis;
+
+    const enriched_positions = filterNonCurrencyPositions(raw_enriched_positions);
+    const plan_positions = raw_plan_positions.filter(pos => pos.instrument_type !== "currency");
 
     const totalPortfolio = consolidated_portfolio.total_amount_portfolio;
 
@@ -123,18 +146,22 @@ export default function DashboardPage() {
     const recommendations: Recommendation[] = plan_positions
       .filter((pos) => pos.to_buy_lots.units !== 0 || pos.to_buy_lots.nano !== 0) // Filter by MoneyValue equivalent
       .slice(0, 3)
-      .map((pos) => ({
-        action: (pos.to_buy_lots.units || pos.to_buy_lots.nano) > 0 ? "BUY" : "SELL", // Check units or nano
-        ticker: pos.ticker,
-        quantity: Math.abs(quotationToNumber(pos.to_buy_lots)), // Convert Quotation to number
-        reason:
-          (pos.to_buy_lots.units || pos.to_buy_lots.nano) > 0
-            ? `Target allocation: ${(
-                parseFloat(pos.plan_proportion_in_portfolio) * 100
-              ).toFixed(1)}%`
-            : "Reduce position to target",
-        type: "rebalance" as const,
-      }));
+      .map((pos) => {
+        const enriched_pos = enriched_positions.find(ep => ep.figi === pos.figi);
+        return {
+          action: (pos.to_buy_lots.units || pos.to_buy_lots.nano) > 0 ? "BUY" : "SELL", // Check units or nano
+          ticker: enriched_pos?.ticker || pos.ticker, // Use enriched_pos ticker if available
+          name: enriched_pos?.name || pos.name, // Use enriched_pos name if available
+          quantity: Math.abs(quotationToNumber(pos.to_buy_lots)), // Convert Quotation to number
+          reason:
+            (pos.to_buy_lots.units || pos.to_buy_lots.nano) > 0
+              ? `Target allocation: ${(
+                  parseFloat(pos.plan_proportion_in_portfolio) * 100
+                ).toFixed(1)}%`
+              : "Reduce position to target",
+          type: "rebalance" as const,
+        }
+      });
 
     const currentStructure = structure_analysis.current_low_risk; // Corrected path
     const targetStructure = structure_analysis.plan_low_risk; // Corrected path
@@ -237,13 +264,13 @@ export default function DashboardPage() {
 
           <main className="container-app py-12">
             <div className="card p-8 text-center max-w-2xl mx-auto">
-              <span className="material-symbols-outlined text-6xl text-secondary-text mb-4">
+              <span className="material-symbols-outlined text-6xl text-secondary mb-4">
                 account_balance_wallet
               </span>
-              <h2 className="text-2xl font-display text-primary-text mb-4">
+              <h2 className="text-primary">
                 No Accounts Selected
               </h2>
-              <p className="text-secondary-text mb-6">
+              <p className="text-secondary mb-6">
                 Please connect a broker and select accounts to view your
                 portfolio analysis.
               </p>
@@ -278,7 +305,7 @@ export default function DashboardPage() {
           <main className="container-app py-12">
             <div className="card p-12 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-secondary-text">
+              <p className="text-secondary">
                 Loading portfolio data...
               </p>
             </div>
@@ -312,7 +339,7 @@ export default function DashboardPage() {
                   <h3 className="text-xl font-bold text-primary-text mb-2">
                     Error Loading Portfolio
                   </h3>
-                  <p className="text-secondary-text mb-4">{error.message}</p>
+                  <p className="text-secondary mb-4">{error.message}</p>
                   <div className="flex gap-4">
                     <button onClick={() => refetch()} className="btn btn-primary">
                       Try Again
@@ -386,96 +413,12 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Column - Main Content */}
             <div className="lg:col-span-8 space-y-6">
-              {/* Risk Allocation with embedded Structure Table */}
-              <Card>
-                <h2 className="text-lg font-semibold text-text-primary mb-4">
-                  Risk Allocation
-                </h2>
-
-                {/* Risk Parts Summary - Above bars with visual connection */}
-                {(() => {
-                  // Calculate widths from actual bar segments
-                  const sharesWidth = allocationSegments.current.find(s => s.label === "Shares")?.value || 0;
-                  const etfsWidth = allocationSegments.current.find(s => s.label === "ETFs")?.value || 0;
-                  const bondsWidth = allocationSegments.current.find(s => s.label === "Bonds")?.value || 0;
-                  const govBondsWidth = allocationSegments.current.find(s => s.label === "Gov Bonds")?.value || 0;
-
-                  const highRiskWidth = sharesWidth + etfsWidth;
-                  const lowRiskWidth = bondsWidth + govBondsWidth;
-
-                  return (
-                    <div className="flex items-center space-x-4 mb-0">
-                      <span className="w-32"></span>
-                      <div className="flex-1 flex flex-col">
-                        {/* Label cards aligned to proportions */}
-                        <div className="flex gap-[2px] mb-0">
-                          <div
-                            className="flex items-center justify-between p-2 px-3 bg-primary/10 border border-primary/30 rounded-t-lg min-w-0 flex-shrink"
-                            style={{ width: `${highRiskWidth}%` }}
-                          >
-                            <span className="text-xs font-medium text-text-secondary uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">High Risk</span>
-                            <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-                              <span className="font-semibold text-text-primary text-sm whitespace-nowrap">
-                                {formatPercent(analysis.structure_analysis.current_high_risk.proportion_in_portfolio)}
-                              </span>
-                              {analysis.structure_analysis.plan_high_risk && (
-                                <span className="text-xs text-text-secondary whitespace-nowrap">
-                                  → {formatPercent(analysis.structure_analysis.plan_high_risk.proportion_in_portfolio)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div
-                            className="flex items-center justify-between p-2 px-3 bg-success/10 border border-success/30 rounded-t-lg min-w-fit flex-grow"
-                            style={{ width: `${lowRiskWidth}%` }}
-                          >
-                            <span className="text-xs font-medium text-text-secondary uppercase tracking-wide whitespace-nowrap">Low Risk</span>
-                            <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-                              <span className="font-semibold text-text-primary text-sm whitespace-nowrap">
-                                {formatPercent(analysis.structure_analysis.current_low_risk.proportion_in_portfolio)}
-                              </span>
-                              {analysis.structure_analysis.plan_low_risk && (
-                                <span className="text-xs text-text-secondary whitespace-nowrap">
-                                  → {formatPercent(analysis.structure_analysis.plan_low_risk.proportion_in_portfolio)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        {/* Connector strips aligned to bar segments */}
-                        <div className="flex gap-[2px]">
-                          <div
-                            className="h-2 bg-primary/20 border-l border-r border-primary/30"
-                            style={{ width: `${highRiskWidth}%`, minWidth: '16px' }}
-                          ></div>
-                          <div
-                            className="h-2 bg-success/20 border-l border-r border-success/30"
-                            style={{ width: `${lowRiskWidth}%`, minWidth: '16px' }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                <div className="space-y-4">
-                  <AllocationBar
-                    label="Current Allocation"
-                    segments={allocationSegments.current}
-                  />
-                  <AllocationBar
-                    label="Target Allocation"
-                    segments={allocationSegments.target}
-                  />
-                </div>
-
-                <AllocationLegend items={legendItems} />
-
-                {/* Embedded Structure Table */}
-                <div className="mt-6">
-                  <StructureTable data={analysis.structure_analysis} />
-                </div>
-              </Card>
+              <RiskBreakdown
+                analysis={analysis.structure_analysis}
+                currencyCode={totalPortfolio.currency}
+                allocationSegments={allocationSegments}
+                legendItems={legendItems}
+              />
 
               {/* Portfolio Summary */}
               <Card>
@@ -499,9 +442,7 @@ export default function DashboardPage() {
                 </h2>
                 <RecommendationsGrid
                   recommendations={recommendations}
-                  onRecommendationClick={(rec) =>
-                    console.log("Clicked recommendation:", rec)
-                  }
+                  onRecommendationClick={handleRecommendationClick}
                   data-testid="recommendation-card"
                 />
               </Card>
@@ -518,7 +459,13 @@ export default function DashboardPage() {
 
           {/* Full-Width Portfolio Positions */}
           <section className="mt-6">
-            <h2 className="text-lg font-semibold text-text-primary mb-4">Portfolio Positions</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-text-primary">Portfolio Positions</h2>
+              <Link href="/positions" className="text-sm text-secondary hover:text-primary transition-colors flex items-center gap-1">
+                Manage
+                <span className="material-symbols-outlined text-base">chevron_right</span>
+              </Link>
+            </div>
             <PortfolioTable
               enrichedPositions={enrichedPositions}
               planPositions={planPositions}
@@ -532,6 +479,20 @@ export default function DashboardPage() {
             isRefreshing={isLoading} // Use isLoading from usePortfolioAnalysis
           />
         </main>
+
+        {selectedPositionForOrder && (
+          <OrderDialog
+            open={isOrderDialogOpen}
+            onOpenChange={setIsOrderDialogOpen}
+            position={selectedPositionForOrder.position}
+            orderType={selectedPositionForOrder.recommendation.action}
+            recommendedLots={selectedPositionForOrder.recommendation.quantity}
+            onSuccess={() => {
+              setIsOrderDialogOpen(false);
+              refetch();
+            }}
+          />
+        )}
       </div>
     </AuthGuard>
   );

@@ -58,10 +58,10 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="card w-full max-w-md space-y-6">
         <div className="text-center">
-          <h1 className="text-4xl font-display text-primary tracking-wider mb-2">
+          <h1 className="text-h2 font-display text-primary tracking-wider mb-2">
             TRACKFOLIO
           </h1>
-          <p className="text-secondary-text">Sign in to your account</p>
+          <p className="text-secondary">Sign in to your account</p>
         </div>
 
         {error && (
@@ -110,7 +110,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-secondary-text text-sm">
+        <p className="text-center text-secondary text-sm">
           Don't have an account?{" "}
           <Link href="/register" className="text-primary hover:underline">
             Register

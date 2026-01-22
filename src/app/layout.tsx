@@ -53,8 +53,8 @@ export default function RootLayout({
       <body
         className={`${bebasNeue.variable} ${manrope.variable} antialiased`}
       >
+        <div className="grain-overlay" />
         <ThemeProvider>
-          <div className="grain-overlay" />
           <QueryClientProvider client={queryClient}>
             {children}
           </QueryClientProvider>

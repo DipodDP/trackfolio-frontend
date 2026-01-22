@@ -13,10 +13,10 @@ export function HeroSection({
     <section className="relative mb-16 text-center md:text-left py-8 md:py-12">
       <div className="skewed-bg" />
       <div className="relative">
-        <h1 className="font-display text-6xl md:text-8xl lg:text-9xl tracking-[0.1em] text-primary-text uppercase leading-none">
+        <h1 className="font-display text-display-lg md:text-display-xl tracking-wider text-primary uppercase leading-none">
           {title}
         </h1>
-        <p className="mt-4 text-lg text-secondary-text max-w-2xl mx-auto md:mx-0">
+        <p className="mt-4 text-lg text-secondary max-w-2xl mx-auto md:mx-0">
           {subtitle}
         </p>
       </div>
