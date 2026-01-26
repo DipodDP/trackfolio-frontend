@@ -12,6 +12,7 @@ import {
   formatPercent,
   formatQuotation,
 } from "@/utils/formatters";
+
 import {
   formatProfitDisplay,
   formatInstrumentType,
@@ -207,7 +208,7 @@ export function createPositionColumns(
 
     // Profit column with color coding
     {
-      accessorKey: "profit_fifo",
+      accessorKey: "profit_percentage",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -216,19 +217,23 @@ export function createPositionColumns(
         />
       ),
       cell: ({ row }) => {
-        const profitFifo = row.getValue<number | undefined>("profit_fifo");
-        const profitDisplay = formatProfitDisplay(
-          typeof profitFifo === "number" ? profitFifo : 0
-        );
+        const profitPercentage = row.original.profit_percentage;
+        const profitDisplay = formatProfitDisplay(profitPercentage);
+        const profit = row.original.profit;
 
         return (
           <div
-            className={`flex items-center justify-end gap-1 font-medium ${profitDisplay.color}`}
+            className={`text-right font-medium ${profitDisplay.color}`}
           >
-            <span className="material-symbols-outlined text-sm">
-              {profitDisplay.icon}
-            </span>
-            <span>{profitDisplay.text}</span>
+            <div className="flex flex-col items-end">
+              <span>{profit ? formatMoneyValue(profit) : "-"}</span>
+              <div className="flex items-center justify-end gap-1 text-xs">
+                <span className="material-symbols-outlined text-sm">
+                  {profitDisplay.icon}
+                </span>
+                <span>{profitDisplay.text}</span>
+              </div>
+            </div>
           </div>
         );
       },

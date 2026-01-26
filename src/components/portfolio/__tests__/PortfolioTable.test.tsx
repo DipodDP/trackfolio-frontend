@@ -70,8 +70,7 @@ const mockEnrichedPositions: EnrichedPosition[] = [
     current_nkd: null,
     proportion: '0.1671',
     proportion_in_portfolio: '0.0522',
-    profit: '1.9765',
-    profit_fifo: '1.1156'
+    profit: '1.9765'
   }
 ];
 
@@ -149,8 +148,8 @@ describe('PortfolioTable', () => {
       />
     );
 
-    const profitCell = screen.getByText('111.56 %');
-    expect(profitCell.closest('td')).toHaveClass('text-green-500');
+    const profitCell = screen.getByText('+197.65%');
+    expect(profitCell.closest('td')).toHaveClass('text-success');
   });
 
   it('should join enriched positions with plan positions by figi', () => {

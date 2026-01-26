@@ -20,15 +20,15 @@ export function mergePositionWithPlan(
   planPos: PlanPosition | undefined
 ): TablePosition {
   // Convert profit from MoneyValue to number if available
-  const profitValue: MoneyValue | null = enrichedPos.profit !== null && enrichedPos.profit !== undefined
-    ? {
-        currency: enrichedPos.current_price.currency,
-        units: Math.floor(parseFloat(enrichedPos.profit)), // Convert to number
-        nano: Math.round(
-          (parseFloat(enrichedPos.profit) - Math.floor(parseFloat(enrichedPos.profit))) * 1_000_000_000
-        ),
-      }
-    : null;
+  const profitPercentage = parseFloat(enrichedPos.profit);
+  const totalValue = moneyValueToNumber(enrichedPos.total);
+  const profitAmount = totalValue * profitPercentage;
+
+  const profitValue: MoneyValue | null = {
+    currency: enrichedPos.total.currency,
+    units: Math.floor(profitAmount),
+    nano: Math.round((profitAmount - Math.floor(profitAmount)) * 1_000_000_000),
+  };
 
   return {
     // Core identification
@@ -44,7 +44,7 @@ export function mergePositionWithPlan(
     proportion: parseFloat(enrichedPos.proportion),
     proportion_in_portfolio: parseFloat(enrichedPos.proportion_in_portfolio),
     profit: profitValue,
-    profit_fifo: parseFloat(enrichedPos.profit_fifo),
+    profit_percentage: profitPercentage,
     lot: enrichedPos.lot_size,
 
     // Plan data (with defaults if plan doesn't exist)
@@ -100,23 +100,23 @@ export function transformToTableFormat(
  * Determines profit status based on profit_fifo value
  */
 export function getProfitStatus(
-  profit_fifo: number
+  profit_percentage: number
 ): "profit" | "loss" | "neutral" {
-  if (profit_fifo > 0.01) return "profit"; // > 1%
-  if (profit_fifo < -0.01) return "loss"; // < -1%
+  if (profit_percentage > 0.01) return "profit"; // > 1%
+  if (profit_percentage < -0.01) return "loss"; // < -1%
   return "neutral";
 }
 
 /**
  * Formats profit value for display with color coding
  */
-export function formatProfitDisplay(profit_fifo: number): {
+export function formatProfitDisplay(profit_percentage: number): {
   text: string;
   color: string;
   icon: string;
 } {
-  const status = getProfitStatus(profit_fifo);
-  const percentage = (profit_fifo * 100).toFixed(2);
+  const status = getProfitStatus(profit_percentage);
+  const percentage = (profit_percentage * 100).toFixed(2);
 
   if (status === "profit") {
     return {

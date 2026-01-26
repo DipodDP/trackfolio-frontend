@@ -18,7 +18,7 @@ export interface TablePosition {
   proportion: number; // Proportion within instrument type
   proportion_in_portfolio: number; // Proportion in total portfolio
   profit: MoneyValue | null; // Absolute profit
-  profit_fifo: number; // Profit percentage (FIFO method)
+  profit_percentage: number; // Profit percentage (FIFO method)
   lot: number;
 
   // Plan data (from PlanPosition)

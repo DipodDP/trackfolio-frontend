@@ -111,8 +111,10 @@ export default function DashboardPage() {
 
     // totalProfitLoss calculation
     const totalProfitLossAmount = enriched_positions.reduce((sum, pos) => {
-      // Assuming pos.profit_fifo is a string, convert to number
-      return sum + parseFloat(pos.profit_fifo || '0');
+      const profitPercentage = parseFloat(pos.profit || '0');
+      const totalValue = moneyValueToNumber(pos.total);
+      const profitAmount = totalValue * profitPercentage;
+      return sum + profitAmount;
     }, 0);
     // Convert totalProfitLossAmount to MoneyValue
     const totalProfitLoss: MoneyValue = {
@@ -126,21 +128,26 @@ export default function DashboardPage() {
 
     const positions: Position[] = enriched_positions.slice(0, 5).map((pos) => {
       const plan_pos = plan_positions.find((p) => p.figi === pos.figi);
-      return {
-        ticker: pos.ticker,
-        name: pos.name,
-        instrumentType: pos.instrument_type,
-        price: moneyValueToNumber(pos.current_price), // Convert MoneyValue to number
-        quantity: quotationToNumber(pos.quantity), // Convert Quotation to number
-        total: moneyValueToNumber(pos.total), // Convert MoneyValue to number
-        planTotal: plan_pos?.plan_total ? moneyValueToNumber(plan_pos.plan_total) : 0, // Convert MoneyValue to number
-        proportion: parseFloat(pos.proportion_in_portfolio) * 100,
-        profit: {
-          amount: parseFloat(pos.profit || '0'),
-          percent: parseFloat(pos.profit_fifo || '0') * 100,
-        },
-        targetProgress: parseFloat(plan_pos?.target_progress || '0'),
-      };
+        const profitPercentage = parseFloat(pos.profit || '0');
+        const totalValue = moneyValueToNumber(pos.total);
+        const profitAmount = totalValue * profitPercentage;
+        return {
+          ticker: pos.ticker,
+          name: pos.name,
+          instrumentType: pos.instrument_type,
+          price: moneyValueToNumber(pos.current_price), // Convert MoneyValue to number
+          quantity: quotationToNumber(pos.quantity), // Convert Quotation to number
+          total: moneyValueToNumber(pos.total), // Convert MoneyValue to number
+          planTotal: plan_pos?.plan_total
+            ? moneyValueToNumber(plan_pos.plan_total)
+            : 0, // Convert MoneyValue to number
+          proportion: parseFloat(pos.proportion_in_portfolio) * 100,
+          profit: {
+            amount: profitAmount,
+            percent: profitPercentage * 100,
+          },
+          targetProgress: parseFloat(plan_pos?.target_progress || '0'),
+        };
     });
 
     const recommendations: Recommendation[] = plan_positions

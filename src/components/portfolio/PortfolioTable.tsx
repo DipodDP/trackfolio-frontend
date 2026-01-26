@@ -25,6 +25,7 @@ import {
   formatQuotation,
   formatPercent,
 } from '@/utils/formatters';
+import { moneyValueToNumber } from '@/lib/utils/money';
 import {
   formatProfitDisplay,
   formatInstrumentType,
@@ -118,9 +119,19 @@ export function PortfolioTable({
               const targetProgress = plan
                 ? parseFloat(plan.target_progress) * 100
                 : 0;
-              const profitDisplay = formatProfitDisplay(
-                parseFloat(position.profit_fifo)
-              );
+              const profitPercentage = parseFloat(position.profit);
+              const totalValue = moneyValueToNumber(position.total);
+              const profitAmount = totalValue * profitPercentage;
+
+              const profitValue = {
+                currency: position.total.currency,
+                units: Math.floor(profitAmount),
+                nano: Math.round(
+                  (profitAmount - Math.floor(profitAmount)) * 1_000_000_000
+                ),
+              };
+
+              const profitDisplay = formatProfitDisplay(profitPercentage);
               const instrumentType = formatInstrumentType(
                 position.instrument_type
               );
@@ -177,11 +188,14 @@ export function PortfolioTable({
                   <TableCell
                     className={`text-right font-medium ${profitDisplay.color}`}
                   >
-                    <div className="flex items-center justify-end gap-1">
-                      <span className="material-symbols-outlined text-sm">
-                        {profitDisplay.icon}
-                      </span>
-                      <span>{profitDisplay.text}</span>
+                    <div className="flex flex-col items-end">
+                      <span>{formatMoneyValue(profitValue)}</span>
+                      <div className="flex items-center justify-end gap-1 text-xs">
+                        <span className="material-symbols-outlined text-sm">
+                          {profitDisplay.icon}
+                        </span>
+                        <span>{profitDisplay.text}</span>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
