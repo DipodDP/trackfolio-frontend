@@ -27,7 +27,7 @@ import {
 import { DataTablePagination } from "@/components/data-table/DataTablePagination";
 import { DataTableToolbar } from "@/components/data-table/DataTableToolbar";
 import { TablePosition } from "@/types/position";
-import { EditTargetProportionDialog } from "./dialogs/EditTargetProportionDialog";
+import { EditTargetsDialog } from "./dialogs/EditTargetsDialog";
 import { createPositionColumns } from "./columns/position-columns";
 
 interface PositionsDataTableProps {
@@ -166,7 +166,7 @@ export function PositionsDataTable({
       <DataTablePagination table={table} />
 
       {/* Edit Target Proportion Modal */}
-      <EditTargetProportionDialog
+      <EditTargetsDialog
         isOpen={!!editProportionModal}
         onClose={() => setEditProportionModal(null)}
         position={editProportionModal}

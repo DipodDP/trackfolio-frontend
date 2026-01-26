@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from "react";
 import {
   Table,
   TableHeader,
@@ -6,81 +6,77 @@ import {
   TableHead,
   TableBody,
   TableCell,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/Badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/Progress';
-import Button from '@/components/ui/Button';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/Badge";
+import { Progress } from "@/components/ui/Progress";
 
-import { EnrichedPosition, PlanPosition } from '@/types/portfolio';
+import { EnrichedPosition, PlanPosition } from "@/types/portfolio";
 import {
   formatMoneyValue,
   formatQuotation,
   formatPercent,
-} from '@/utils/formatters';
-import { moneyValueToNumber } from '@/lib/utils/money';
+} from "@/utils/formatters";
+import { moneyValueToNumber } from "@/lib/utils/money";
 import {
   formatProfitDisplay,
   formatInstrumentType,
-} from '@/lib/utils/position';
+} from "@/lib/utils/position";
+import { TablePosition } from "@/types/position";
+import { EditTargetsDialog } from "@/app/positions/components/dialogs/EditTargetsDialog";
 
 interface PortfolioTableProps {
   enrichedPositions: EnrichedPosition[];
   planPositions: PlanPosition[];
-  onSort?: (column: string, direction: 'asc' | 'desc') => void;
+  onSort?: (column: string, direction: "asc" | "desc") => void;
+  onRefresh?: () => void;
 }
 
 export function PortfolioTable({
   enrichedPositions,
   planPositions,
   onSort,
+  onRefresh,
 }: PortfolioTableProps) {
-  // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedPosition, setSelectedPosition] = useState<{
-    ticker: string;
-    name: string;
-    currentProportion: string;
-    targetProportion: string;
-  } | null>(null);
-  const [editedProportion, setEditedProportion] = useState('');
+  const [editProportionModal, setEditProportionModal] =
+    useState<TablePosition | null>(null);
 
-  // Create lookup map for plan data
   const planLookup = useMemo(
-    () => new Map(planPositions.map(p => [p.figi, p])),
+    () => new Map(planPositions.map((p) => [p.figi, p])),
     [planPositions]
   );
 
-  const handleProportionClick = (
-    position: EnrichedPosition,
-    plan: PlanPosition | undefined
-  ) => {
-    if (!plan) return;
+  const handleProportionClick = useCallback(
+    (position: EnrichedPosition, plan: PlanPosition | undefined) => {
+      if (!plan) return;
 
-    setSelectedPosition({
-      ticker: position.ticker,
-      name: position.name,
-      currentProportion: position.proportion_in_portfolio,
-      targetProportion: plan.plan_proportion_in_portfolio,
-    });
-    setEditedProportion(
-      (parseFloat(plan.plan_proportion_in_portfolio) * 100).toFixed(2)
-    );
-    setIsModalOpen(true);
-  };
+      const tablePosition: TablePosition = {
+        figi: position.figi,
+        ticker: position.ticker,
+        name: position.name,
+        instrument_type: position.instrument_type as TablePosition['instrument_type'],
+        quantity: position.quantity.units,
+        current_price: position.current_price,
+        total: position.total,
+        proportion: parseFloat(position.proportion),
+        proportion_in_portfolio: parseFloat(position.proportion_in_portfolio),
+        profit: null, // Profit calculation is complex, omitting for now
+        profit_percentage: parseFloat(position.profit),
+        lot: position.lot_size,
+        plan_quantity: plan.plan_quantity.units,
+        plan_total: plan.plan_total,
+        plan_proportion_in_portfolio: parseFloat(plan.plan_proportion_in_portfolio),
+        to_buy_lots: plan.to_buy_lots.units,
+        target_profit: parseFloat(plan.target_profit),
+        exit_drawdown: parseFloat(plan.exit_drawdown),
+        exit_profit_price: plan.exit_profit_price,
+        exit_loss_price: plan.exit_loss_price,
+        target_progress: parseFloat(plan.target_progress),
+      };
 
-  const handleSaveProportion = () => {
-    // TODO: Implement API call to update target proportion
-    console.log('Save proportion:', selectedPosition?.ticker, editedProportion);
-    setIsModalOpen(false);
-  };
+      setEditProportionModal(tablePosition);
+    },
+    []
+  );
 
   return (
     <div className="space-y-4">
@@ -114,7 +110,7 @@ export function PortfolioTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {enrichedPositions.map(position => {
+            {enrichedPositions.map((position) => {
               const plan = planLookup.get(position.figi);
               const targetProgress = plan
                 ? parseFloat(plan.target_progress) * 100
@@ -137,10 +133,7 @@ export function PortfolioTable({
               );
 
               return (
-                <TableRow
-                  key={position.figi}
-                  className="hover:bg-muted/50"
-                >
+                <TableRow key={position.figi} className="hover:bg-muted/50">
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <span className="text-primary-text font-medium">
@@ -166,7 +159,7 @@ export function PortfolioTable({
                     {formatMoneyValue(position.total)}
                   </TableCell>
                   <TableCell className="text-right text-secondary-text">
-                    {plan ? formatMoneyValue(plan.plan_total) : '-'}
+                    {plan ? formatMoneyValue(plan.plan_total) : "-"}
                   </TableCell>
                   <TableCell className="text-right text-primary-text">
                     <div className="flex flex-col gap-1.5 items-end">
@@ -177,10 +170,10 @@ export function PortfolioTable({
                         <button
                           type="button"
                           onClick={() => handleProportionClick(position, plan)}
-                          className="px-2 py-0.5 text-xs font-medium bg-card hover:bg-card/80 border border-border hover:border-border/80 rounded text-text-secondary hover:text-text-primary transition-all"
-                          title="Click to edit target proportion"
+                          className="px-2 py-0.5 text-xs font-medium bg-card hover:bg-card/80 border border-border hover:border-border/80 rounded text-text-secondary hover:text-text-primary transition-all flex items-center justify-center gap-1"
+                          title="Click to edit targets of the position"
                         >
-                          → {formatPercent(plan.plan_proportion_in_portfolio)}
+                          <span className="material-symbols-outlined text-[6px]">track_changes</span> {formatPercent(plan.plan_proportion_in_portfolio)}
                         </button>
                       )}
                     </div>
@@ -203,7 +196,7 @@ export function PortfolioTable({
                       <div className="w-32">
                         <Progress
                           value={targetProgress}
-                          color={targetProgress >= 0 ? 'success' : 'coral'}
+                          color={targetProgress >= 0 ? "success" : "coral"}
                           showLabel
                           size="sm"
                         />
@@ -217,53 +210,15 @@ export function PortfolioTable({
         </Table>
       </div>
 
-      {/* Edit Target Proportion Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Target Proportion</DialogTitle>
-            <DialogDescription>
-              Adjust the target portfolio proportion for{' '}
-              {selectedPosition?.ticker} ({selectedPosition?.name})
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-primary-text">
-                Current Proportion
-              </label>
-              <div className="text-lg font-semibold text-secondary-text">
-                {selectedPosition &&
-                  formatPercent(selectedPosition.currentProportion)}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label
-                className="text-sm font-medium text-primary-text"
-                htmlFor="target-proportion"
-              >
-                Target Proportion (%)
-              </label>
-              <input
-                id="target-proportion"
-                type="number"
-                step="0.01"
-                min="0"
-                max="100"
-                value={editedProportion}
-                onChange={e => setEditedProportion(e.target.value)}
-                className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-primary"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveProportion}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditTargetsDialog
+        isOpen={!!editProportionModal}
+        onClose={() => setEditProportionModal(null)}
+        position={editProportionModal}
+        onSave={async () => {
+          setEditProportionModal(null);
+          if (onRefresh) onRefresh();
+        }}
+      />
     </div>
   );
 }

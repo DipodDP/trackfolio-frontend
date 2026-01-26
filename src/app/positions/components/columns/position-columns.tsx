@@ -192,14 +192,13 @@ export function createPositionColumns(
             </span>
             {planProportion != null && (
               <button
-                type="button"
-                onClick={() => onEditProportion(row.original)}
-                className="px-2 py-0.5 text-xs font-medium bg-card hover:bg-card/80 border border-border hover:border-border/80 rounded text-text-secondary hover:text-text-primary transition-all"
-                title="Click to edit target proportion"
-              >
-                → {formatPercent(planProportion)}
-              </button>
-            )}
+                          type="button"
+                          onClick={() => onEditProportion(row.original)}
+                          className="px-2 py-0.5 text-xs font-medium bg-card hover:bg-card/80 border border-border hover:border-border/80 rounded text-text-secondary hover:text-text-primary transition-all flex items-center justify-center gap-1"
+                          title="Click to edit target proportion"
+                        >
+                          <span className="material-symbols-outlined text-[6px]">track_changes</span> {formatPercent(planProportion)}
+                        </button>            )}
           </div>
         );
       },
