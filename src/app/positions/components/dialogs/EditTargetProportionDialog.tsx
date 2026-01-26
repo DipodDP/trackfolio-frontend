@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { TablePosition } from "@/types/position";
 import { formatPercent } from "@/utils/formatters";
+import { updatePositionAttributes } from "@/lib/api/position-attributes";
+import { toast } from "sonner";
 
 interface EditTargetProportionDialogProps {
   isOpen: boolean;
@@ -43,23 +45,35 @@ export function EditTargetProportionDialog({
 
     setIsLoading(true);
     try {
-      // TODO: Call API to update target proportion
-      // Backend API integration pending - requires endpoint to update single position's target proportion
-      console.log(
-        "Update target proportion:",
-        position.figi,
-        editedProportion,
-        "%"
-      );
+      // Validate input range
+      const proportionValue = parseFloat(editedProportion);
+      if (isNaN(proportionValue) || proportionValue < 0 || proportionValue > 100) {
+        toast.error("Invalid proportion", {
+          description: "Target proportion must be between 0% and 100%",
+        });
+        return;
+      }
 
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Convert percentage (0-100) to decimal (0-1) for backend
+      const decimalProportion = proportionValue / 100;
+
+      // Call API to update target proportion
+      await updatePositionAttributes(position.figi, {
+        plan_proportion_in_portfolio: decimalProportion,
+      });
+
+      // Show success message
+      toast.success("Target proportion updated", {
+        description: `Set to ${proportionValue.toFixed(2)}% for ${position.ticker}`,
+      });
 
       // Call onSave to refresh data and close modal
       await onSave();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to update target proportion:", error);
-      // TODO: Show error toast notification
+      toast.error("Failed to update target proportion", {
+        description: error.message || "Please try again",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -101,6 +115,7 @@ export function EditTargetProportionDialog({
               max="100"
               value={editedProportion}
               onChange={(e) => setEditedProportion(e.target.value)}
+              placeholder="Default: 5%"
               className="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 text-text-primary"
               disabled={isLoading}
             />

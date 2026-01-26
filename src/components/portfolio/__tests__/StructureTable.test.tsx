@@ -21,6 +21,11 @@ jest.mock('@/utils/formatters', () => ({
     const disbalance = currentNum - planNum;
     return `${(disbalance * 100).toFixed(2)} %`;
   }),
+  formatMoneyValue: jest.fn((mv) => {
+    if (!mv) return '—';
+    const amount = Number(mv.units) + Number(mv.nano) / 1_000_000_000;
+    return `${amount.toFixed(2)} ₽`;
+  }),
 }));
 
 const mockStructureAnalysis: StructureAnalysis = {

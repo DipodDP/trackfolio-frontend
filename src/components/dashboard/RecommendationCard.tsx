@@ -14,15 +14,16 @@ export interface Recommendation {
 interface RecommendationCardProps {
   recommendation: Recommendation;
   onClick?: () => void;
+  className?: string;
 }
 
-export function RecommendationCard({ recommendation, onClick }: RecommendationCardProps) {
+export function RecommendationCard({ recommendation, onClick, className }: RecommendationCardProps) {
   const { action, ticker, quantity, reason, type } = recommendation;
   const isBuy = action === "BUY";
 
   return (
     <div
-      className="p-4 rounded-lg border border-border bg-muted/50 hover:bg-muted transition-colors cursor-pointer shadow-sm"
+      className={`p-4 rounded-lg border border-border bg-muted/50 hover:bg-muted transition-colors cursor-pointer shadow-sm ${className || ""}`}
       onClick={onClick}
     >
       <div className="flex items-center gap-2 mb-2">
