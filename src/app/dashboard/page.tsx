@@ -31,7 +31,8 @@ import { useSelectedAccountIds } from "@/hooks/useSelectedAccountIds";
 import { RiskBreakdown } from "@/components/dashboard/RiskBreakdown";
 import { PortfolioTable } from "@/components/portfolio/PortfolioTable";
 import { StructureTable } from "@/components/portfolio/StructureTable";
-import { PortfolioSummary } from "@/components/portfolio/PortfolioSummary"; // Placeholder needed
+import { PortfolioSummary } from "@/components/portfolio/PortfolioSummary";
+import { CurrencyBreakdown } from "@/components/portfolio/CurrencyBreakdown";
 
 import { formatMoneyValue, moneyValueToNumber } from "@/lib/utils/money";
 import { quotationToNumber, formatPercent } from "@/utils/formatters"; // Import quotationToNumber and formatPercent
@@ -40,7 +41,7 @@ import { MoneyValue } from "@/types/portfolio"; // Import MoneyValue type
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { additionalCash, _hasHydrated } = useAppStore();
+  const { externalCash, _hasHydrated } = useAppStore();
   const { user } = useAuthStore();
 
   const apiClientId = useApiClientId();
@@ -51,7 +52,7 @@ export default function DashboardPage() {
     isLoading,
     error,
     refetch,
-  } = usePortfolioAnalysis(apiClientId, selectedAccountIds);
+  } = usePortfolioAnalysis(apiClientId, selectedAccountIds, externalCash);
 
   const isSandbox = true; // Hardcoded for now, can be state later
 
@@ -410,8 +411,8 @@ export default function DashboardPage() {
             />
             <StatCard
               title="Available Cash"
-              value={formatMoneyValue(analysis.consolidated_portfolio.cash_balance)}
-              subtitle={`${moneyValueToNumber(totalPortfolio) === 0 ? "0.0%" : ((moneyValueToNumber(analysis.consolidated_portfolio.cash_balance) / moneyValueToNumber(totalPortfolio)) * 100).toFixed(1)}% of Portfolio`}
+              value={formatMoneyValue(analysis.consolidated_portfolio.currency_breakdown.total_value)}
+              subtitle={`${moneyValueToNumber(totalPortfolio) === 0 ? "0.0%" : ((moneyValueToNumber(analysis.consolidated_portfolio.currency_breakdown.total_value) / moneyValueToNumber(totalPortfolio)) * 100).toFixed(1)}% of Portfolio`}
               accentColor="coral"
             />
           </div>
@@ -420,42 +421,57 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Column - Main Content */}
             <div className="lg:col-span-8 space-y-6">
+              {/* Cash Holdings */}
+              <Card className="p-6 lg:h-[382px] flex flex-col">
+                <h2 className="text-lg font-semibold text-text-primary mb-4">
+                  Cash Holdings
+                </h2>
+                <div className="flex-1 overflow-y-auto">
+                  <CurrencyBreakdown
+                    breakdown={analysis.consolidated_portfolio.currency_breakdown}
+                    baseCurrency={analysis.consolidated_portfolio.total_amount_portfolio.currency}
+                  />
+                </div>
+              </Card>
+
               <RiskBreakdown
                 analysis={analysis.structure_analysis}
                 currencyCode={totalPortfolio.currency}
                 allocationSegments={allocationSegments}
                 legendItems={legendItems}
               />
-
-              {/* Portfolio Summary */}
-              <Card>
-                <h2 className="text-lg font-semibold text-text-primary mb-4">
-                  Portfolio Summary
-                </h2>
-                <PortfolioSummary
-                  consolidated={analysis.consolidated_portfolio}
-                  totalCash={analysis.total_additional_cash}
-                  assetProportions={analysis.proportion_in_portfolio}
-                />
-              </Card>
             </div>
 
             {/* Right Column - Recommendations & Quick Actions */}
             <div className="lg:col-span-4 space-y-6">
               {/* Rebalancing Recommendations */}
-              <Card>
+              <Card className="p-6 lg:h-[382px] flex flex-col">
                 <h2 className="text-lg font-semibold text-text-primary mb-4">
                   Rebalancing Recommendations
                 </h2>
-                <RecommendationsGrid
-                  recommendations={recommendations}
-                  onRecommendationClick={handleRecommendationClick}
-                  data-testid="recommendation-card"
+                <div className="flex-1 overflow-y-auto">
+                  <RecommendationsGrid
+                    recommendations={recommendations}
+                    onRecommendationClick={handleRecommendationClick}
+                    data-testid="recommendation-card"
+                  />
+                </div>
+              </Card>
+
+              {/* Portfolio Summary */}
+              <Card className="p-6">
+                <h2 className="text-lg font-semibold text-text-primary mb-4">
+                  Portfolio Summary
+                </h2>
+                <PortfolioSummary
+                  consolidated={analysis.consolidated_portfolio}
+                  totalCash={analysis.total_external_cash}
+                  assetProportions={analysis.proportion_in_portfolio}
                 />
               </Card>
 
               {/* Quick Actions */}
-              <Card>
+              <Card className="p-6">
                 <h2 className="text-lg font-semibold text-text-primary mb-4">
                   Quick Actions
                 </h2>

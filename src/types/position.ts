@@ -21,6 +21,11 @@ export interface TablePosition {
   profit_percentage: number; // Profit percentage (FIFO method)
   lot: number;
 
+  // P&L Breakdown
+  realized_pnl: MoneyValue | null;
+  unrealized_pnl: MoneyValue | null;
+  total_pnl: MoneyValue | null;
+
   // Plan data (from PlanPosition)
   plan_quantity: number;
   plan_total: MoneyValue;

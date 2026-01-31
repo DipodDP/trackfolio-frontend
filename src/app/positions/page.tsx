@@ -9,13 +9,14 @@ import { useAuthStore } from "@/store/authStore";
 import apiClient from "@/lib/api-client";
 import type { FullPortfolioAnalysisResponse as PortfolioAnalysisResponse } from "@/types/portfolio";
 import { transformToTableFormat } from "@/lib/utils/position";
+import { numberToMoneyValue } from "@/lib/utils/money";
 import { Skeleton } from "@/components/ui";
 import { PositionsDataTable } from "./components/PositionsDataTable";
 import { DataFreshness } from "@/components/dashboard";
 
 export default function PositionsPage() {
   const router = useRouter();
-  const { selectedApiClientId, selectedAccountIds, additionalCash, _hasHydrated } =
+  const { selectedApiClientId, selectedAccountIds, externalCash, _hasHydrated } =
     useAppStore();
   const { user } = useAuthStore();
 
@@ -38,11 +39,15 @@ export default function PositionsPage() {
       setIsLoading(true);
       setError(null);
       console.log("Positions: Fetching data for API client:", selectedApiClientId, "accounts:", selectedAccountIds);
+
+      // Convert externalCash (number) to MoneyValue format expected by backend
+      const externalCashValue = externalCash > 0 ? numberToMoneyValue(externalCash) : undefined;
+
       const response = await apiClient.post<PortfolioAnalysisResponse>(
         `/api-clients/${selectedApiClientId}/portfolio-analysis/full`,
         {
           account_ids: selectedAccountIds,
-          additional_cash: additionalCash,
+          external_cash: externalCashValue,
         }
       );
       console.log("Positions: API Success Response:", response.data);
@@ -57,7 +62,7 @@ export default function PositionsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedApiClientId, selectedAccountIds, additionalCash, setIsLoading, setError, setPortfolioData, setLastUpdated]);
+  }, [selectedApiClientId, selectedAccountIds, externalCash, setIsLoading, setError, setPortfolioData, setLastUpdated]);
 
   useEffect(() => {
     console.log("Positions useEffect triggered.");
@@ -67,7 +72,7 @@ export default function PositionsPage() {
     if (_hasHydrated) {
       fetchPortfolioData();
     }
-  }, [selectedApiClientId, selectedAccountIds, additionalCash, fetchPortfolioData, _hasHydrated]);
+  }, [selectedApiClientId, selectedAccountIds, externalCash, fetchPortfolioData, _hasHydrated]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

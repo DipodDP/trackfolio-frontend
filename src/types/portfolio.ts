@@ -45,6 +45,24 @@ export interface Quotation {
   nano: number;
 }
 
+/**
+ * Individual currency holding with amount and metadata.
+ */
+export interface CurrencyHolding {
+  currency_code: string;
+  currency_name: string;
+  amount: string; // Decimal as string
+  value_in_base_currency: MoneyValue;
+}
+
+/**
+ * Aggregated currency holdings across all accounts.
+ */
+export interface CurrencyBreakdown {
+  total_value: MoneyValue;
+  holdings: CurrencyHolding[];
+}
+
 export interface EnrichedPosition {
   figi: string;
   ticker: string;
@@ -63,6 +81,10 @@ export interface EnrichedPosition {
   proportion_in_portfolio: string;
   profit: string;
   profit_fifo: string;
+  // P&L Breakdown
+  realized_pnl: MoneyValue | null;
+  unrealized_pnl: MoneyValue | null;
+  total_pnl: MoneyValue | null;
 }
 
 export interface PlanPosition {
@@ -115,8 +137,8 @@ export interface ConsolidatedPortfolio {
   total_amount_shares: MoneyValue;
   total_amount_bonds: MoneyValue;
   total_amount_etf: MoneyValue;
-  total_amount_currencies: MoneyValue;
-  cash_balance: MoneyValue;
+  total_amount_currencies: MoneyValue; // Keep for backwards compatibility
+  currency_breakdown: CurrencyBreakdown; // NEW: Detailed breakdown
   positions: any[]; // Basic positions (not used in UI)
 }
 
@@ -129,7 +151,7 @@ export interface AssetClassProportions {
 
 export interface FullPortfolioAnalysisRequest {
     account_ids: string[];
-    additional_cash?: MoneyValue;
+    external_cash?: MoneyValue;
 }
 
 export interface FullPortfolioAnalysisResponse {
@@ -137,6 +159,6 @@ export interface FullPortfolioAnalysisResponse {
   enriched_positions: EnrichedPosition[];
   plan_positions: PlanPosition[];
   structure_analysis: StructureAnalysis;
-  total_additional_cash: MoneyValue;
+  total_external_cash: MoneyValue; // Renamed from total_additional_cash
   proportion_in_portfolio: AssetClassProportions;
 }

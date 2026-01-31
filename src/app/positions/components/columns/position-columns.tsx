@@ -17,8 +17,10 @@ import {
   formatProfitDisplay,
   formatInstrumentType,
 } from "@/lib/utils/position";
+import { moneyValueToNumber } from "@/lib/utils/money";
 import { PositionRowActions } from "../row-actions/PositionRowActions";
 import { OrderDialog } from "../dialogs/OrderDialog";
+import { cn } from "@/lib/utils/cn";
 
 /**
  * Create position table columns with refresh callback
@@ -237,6 +239,116 @@ export function createPositionColumns(
         );
       },
       enableSorting: true,
+    },
+
+    // P&L Breakdown column (Total P&L with breakdown on hover)
+    {
+      id: "pnl_breakdown",
+      accessorKey: "total_pnl",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title="Total P&L"
+          className="text-right"
+        />
+      ),
+      cell: ({ row }) => {
+        const position = row.original;
+        const totalPnl = position.total_pnl;
+        const realizedPnl = position.realized_pnl;
+        const unrealizedPnl = position.unrealized_pnl;
+
+        if (totalPnl === null || totalPnl === undefined) {
+          return (
+            <div className="text-right text-secondary-text">—</div>
+          );
+        }
+
+        const totalValue = moneyValueToNumber(totalPnl);
+        const realizedValue = realizedPnl !== null && realizedPnl !== undefined ? moneyValueToNumber(realizedPnl) : 0;
+        const unrealizedValue = unrealizedPnl !== null && unrealizedPnl !== undefined ? moneyValueToNumber(unrealizedPnl) : 0;
+
+        const isProfit = totalValue > 0;
+        const isLoss = totalValue < 0;
+
+        return (
+          <div className="text-right group relative">
+            <div className="flex flex-col items-end">
+              <span
+                className={cn(
+                  "font-medium",
+                  isProfit && "text-success",
+                  isLoss && "text-error"
+                )}
+                title="Click for P&L breakdown"
+              >
+                {formatMoneyValue(totalPnl)}
+              </span>
+              <span className="text-xs text-secondary-text flex items-center gap-1">
+                <span className="material-symbols-outlined text-[12px]">
+                  info
+                </span>
+                Breakdown
+              </span>
+            </div>
+
+            {/* Tooltip on hover */}
+            <div className="absolute right-0 top-full mt-2 w-56 p-3 bg-card border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className="space-y-2 text-sm">
+                <div className="font-semibold text-primary-text border-b border-border pb-1">
+                  P&L Breakdown
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-secondary-text">Realized:</span>
+                  <span
+                    className={cn(
+                      "font-medium",
+                      realizedValue > 0 && "text-success",
+                      realizedValue < 0 && "text-error",
+                      realizedValue === 0 && "text-secondary-text"
+                    )}
+                  >
+                    {realizedPnl !== null && realizedPnl !== undefined ? formatMoneyValue(realizedPnl) : "—"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-secondary-text">Unrealized:</span>
+                  <span
+                    className={cn(
+                      "font-medium",
+                      unrealizedValue > 0 && "text-success",
+                      unrealizedValue < 0 && "text-error",
+                      unrealizedValue === 0 && "text-secondary-text"
+                    )}
+                  >
+                    {unrealizedPnl !== null && unrealizedPnl !== undefined ? formatMoneyValue(unrealizedPnl) : "—"}
+                  </span>
+                </div>
+                <div className="border-t border-border pt-1 mt-1">
+                  <div className="flex justify-between items-center font-semibold">
+                    <span className="text-primary-text">Total:</span>
+                    <span
+                      className={cn(
+                        isProfit && "text-success",
+                        isLoss && "text-error"
+                      )}
+                    >
+                      {formatMoneyValue(totalPnl)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      },
+      enableSorting: true,
+      sortingFn: (rowA, rowB) => {
+        const a = moneyValueToNumber(rowA.original.total_pnl);
+        const b = moneyValueToNumber(rowB.original.total_pnl);
+        return a - b;
+      },
+      enableHiding: true,
     },
 
     // Target Progress column

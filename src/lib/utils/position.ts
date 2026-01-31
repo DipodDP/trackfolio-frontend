@@ -47,6 +47,11 @@ export function mergePositionWithPlan(
     profit_percentage: profitPercentage,
     lot: enrichedPos.lot_size,
 
+    // P&L Breakdown
+    realized_pnl: enrichedPos.realized_pnl,
+    unrealized_pnl: enrichedPos.unrealized_pnl,
+    total_pnl: enrichedPos.total_pnl,
+
     // Plan data (with defaults if plan doesn't exist)
     plan_quantity: planPos?.plan_quantity ? quotationToNumber(planPos.plan_quantity) : 0,
     plan_total: planPos?.plan_total ?? {
@@ -152,6 +157,10 @@ export function calculateDisbalance(
 
 /**
  * Formats instrument type for display
+ * Colors match Risk Allocation scheme:
+ * - Shares: bg-primary (red)
+ * - ETFs: bg-coral (orange)
+ * - Bonds: bg-warning (yellow)
  */
 export function formatInstrumentType(
   instrumentType: string
@@ -160,11 +169,11 @@ export function formatInstrumentType(
     case "share":
       return { label: "Share", color: "bg-primary" };
     case "bond":
-      return { label: "Bond", color: "bg-coral" };
+      return { label: "Bond", color: "bg-warning" };
     case "etf":
-      return { label: "ETF", color: "bg-success" };
+      return { label: "ETF", color: "bg-coral" };
     case "currency":
-      return { label: "Currency", color: "bg-warning" };
+      return { label: "Currency", color: "bg-secondary-text" };
     default:
       return { label: instrumentType, color: "bg-secondary-text" };
   }

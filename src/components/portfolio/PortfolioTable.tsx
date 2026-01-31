@@ -62,6 +62,9 @@ export function PortfolioTable({
         profit: null, // Profit calculation is complex, omitting for now
         profit_percentage: parseFloat(position.profit),
         lot: position.lot_size,
+        realized_pnl: position.realized_pnl,
+        unrealized_pnl: position.unrealized_pnl,
+        total_pnl: position.total_pnl,
         plan_quantity: plan.plan_quantity.units,
         plan_total: plan.plan_total,
         plan_proportion_in_portfolio: parseFloat(plan.plan_proportion_in_portfolio),

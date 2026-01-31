@@ -15,9 +15,9 @@ interface AppState {
   toggleAccountSelection: (id: string) => void;
   clearAccountSelection: () => void;
 
-  // Additional cash for analysis
-  additionalCash: number;
-  setAdditionalCash: (amount: number) => void;
+  // External cash for analysis (cash outside brokerage accounts)
+  externalCash: number;
+  setExternalCash: (amount: number) => void;
 
   // Clear all state
   clearAll: () => void;
@@ -32,7 +32,7 @@ export const useAppStore = create<AppState>()(
       },
       selectedApiClientId: null,
       selectedAccountIds: [],
-      additionalCash: 0,
+      externalCash: 0,
 
       setSelectedApiClient: (id) => {
         set({
@@ -58,15 +58,15 @@ export const useAppStore = create<AppState>()(
         set({ selectedAccountIds: [] });
       },
 
-      setAdditionalCash: (amount) => {
-        set({ additionalCash: amount });
+      setExternalCash: (amount) => {
+        set({ externalCash: amount });
       },
 
       clearAll: () => {
         set({
           selectedApiClientId: null,
           selectedAccountIds: [],
-          additionalCash: 0,
+          externalCash: 0,
         });
       },
     }),

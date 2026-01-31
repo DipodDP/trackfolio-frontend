@@ -1,4 +1,21 @@
-import type { MoneyValue } from "@/types/portfolio";
+import type { MoneyValue, CurrencyCode } from "@/types/portfolio";
+
+/**
+ * Convert number to MoneyValue
+ * @param value Number to convert
+ * @param currency Currency code (defaults to RUB)
+ * @returns MoneyValue object
+ */
+export function numberToMoneyValue(
+  value: number,
+  currency: CurrencyCode = "RUB"
+): MoneyValue {
+  return {
+    currency,
+    units: Math.floor(value),
+    nano: Math.round((value - Math.floor(value)) * 1_000_000_000)
+  };
+}
 
 /**
  * Convert MoneyValue to decimal number
