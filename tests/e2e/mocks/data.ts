@@ -11,6 +11,11 @@ export const MOCK_LOGIN_RESPONSE = {
   token_type: "bearer",
 };
 
+export const MOCK_REFRESH_RESPONSE = {
+  access_token: "refreshed-access-token",
+  token_type: "bearer",
+};
+
 export const MOCK_PORTFOLIO_ANALYSIS = {
   consolidated_portfolio: {
     total_amount_portfolio: { currency: "RUB", units: 100000, nano: 0 },

@@ -40,6 +40,30 @@ interface LoginResponse {
 }
 ```
 
+#### 2. Refresh Token Endpoint
+
+-   **Endpoint**: `POST /api/v1/refresh`
+-   **Purpose**: Exchanges a valid refresh token for a new access token. Performs token rotation.
+-   **Authentication**: Requires a valid `refresh_token` cookie (HttpOnly, set during login).
+
+**Request**: No body. The refresh token is sent automatically via the `refresh_token` cookie.
+
+**Response Body (`RefreshResponse`)**
+```typescript
+interface RefreshResponse {
+  access_token: string;
+  token_type: 'bearer';
+}
+```
+
+**Response Headers**: A new `Set-Cookie: refresh_token` header is returned with the rotated refresh token. The old refresh token is blacklisted server-side.
+
+**Behavior:**
+- Verifies the user still exists and is not soft-deleted before issuing new tokens.
+- Blacklists the old refresh token (token rotation) to prevent reuse.
+- Issues a new refresh token via `Set-Cookie`.
+- Returns 401 if the refresh token is missing, invalid, blacklisted, or the user no longer exists.
+
 ---
 
 ### Portfolio API
