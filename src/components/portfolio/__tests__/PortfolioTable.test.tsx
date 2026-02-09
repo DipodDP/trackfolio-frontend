@@ -128,9 +128,16 @@ const mockEnrichedPositions: EnrichedPosition[] = [
     total: { currency: "RUB", units: 135616, nano: 500000000 },
     expected_yield: { currency: "RUB", units: 90055, nano: 710000000 },
     current_nkd: null,
+    total_nkd: { currency: "RUB", units: 0, nano: 0 },
     proportion: "0.1671",
     proportion_in_portfolio: "0.0522",
     profit: "1.9765",
+    profit_fifo: "1.9765",
+    realized_pnl: { currency: "RUB", units: 5000, nano: 0 },
+    unrealized_pnl: { currency: "RUB", units: 85055, nano: 710000000 },
+    total_pnl: { currency: "RUB", units: 90055, nano: 710000000 },
+    total_profit_percent: "1.4050",
+    total_fees: { currency: "RUB", units: 50, nano: 0 },
   },
 ];
 

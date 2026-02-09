@@ -17,7 +17,7 @@ import {
   formatProfitDisplay,
   formatInstrumentType,
 } from "@/lib/utils/position";
-import { moneyValueToNumber } from "@/lib/utils/money";
+import { moneyValueToNumber, numberToMoneyValue } from "@/lib/utils/money";
 import { PositionRowActions } from "../row-actions/PositionRowActions";
 import { OrderDialog } from "../dialogs/OrderDialog";
 import { cn } from "@/lib/utils/cn";
@@ -143,11 +143,30 @@ export function createPositionColumns(
           className="text-right"
         />
       ),
-      cell: ({ row }) => (
-        <div className="text-right font-medium text-primary-text">
-          {formatMoneyValue(row.original.total)}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const position = row.original;
+        const totalNkd = position.total_nkd;
+        const totalWithNkd =
+          moneyValueToNumber(position.total) + moneyValueToNumber(totalNkd);
+        const totalCurrency = position.total?.currency ?? totalNkd?.currency;
+        const totalWithNkdMoney = numberToMoneyValue(
+          totalWithNkd,
+          totalCurrency ?? "RUB"
+        );
+        return (
+          <div className="text-right font-medium text-primary-text">
+            {formatMoneyValue(position.total)}
+            {position.instrument_type === "bond" &&
+              totalNkd &&
+              moneyValueToNumber(totalNkd) > 0 && (
+                <div className="text-xs text-secondary-text font-normal w-full">
+                  <div className="text-center text-[10px]">Incl. ACI:</div>
+                  <div className="text-right">{formatMoneyValue(totalWithNkdMoney)}</div>
+                </div>
+              )}
+          </div>
+        );
+      },
       enableSorting: true,
     },
 
@@ -207,7 +226,7 @@ export function createPositionColumns(
       enableSorting: true,
     },
 
-    // Profit column with color coding
+    // Combined Profit column
     {
       accessorKey: "profit_percentage",
       header: ({ column }) => (
@@ -218,43 +237,9 @@ export function createPositionColumns(
         />
       ),
       cell: ({ row }) => {
-        const profitPercentage = row.original.profit_percentage;
-        const profitDisplay = formatProfitDisplay(profitPercentage);
-        const profit = row.original.profit;
-
-        return (
-          <div
-            className={`text-right font-medium ${profitDisplay.color}`}
-          >
-            <div className="flex flex-col items-end">
-              <span>{profit ? formatMoneyValue(profit) : "-"}</span>
-              <div className="flex items-center justify-end gap-1 text-xs">
-                <span className="material-symbols-outlined text-sm">
-                  {profitDisplay.icon}
-                </span>
-                <span>{profitDisplay.text}</span>
-              </div>
-            </div>
-          </div>
-        );
-      },
-      enableSorting: true,
-    },
-
-    // P&L Breakdown column (Total P&L with breakdown on hover)
-    {
-      id: "pnl_breakdown",
-      accessorKey: "total_pnl",
-      header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title="Total P&L"
-          className="text-right"
-        />
-      ),
-      cell: ({ row }) => {
         const position = row.original;
         const totalPnl = position.total_pnl;
+        const totalProfitPercent = position.total_profit_percent;
         const realizedPnl = position.realized_pnl;
         const unrealizedPnl = position.unrealized_pnl;
 
@@ -265,8 +250,10 @@ export function createPositionColumns(
         }
 
         const totalValue = moneyValueToNumber(totalPnl);
+        const profitDisplay = formatProfitDisplay(totalProfitPercent ?? position.profit_percentage);
         const realizedValue = realizedPnl !== null && realizedPnl !== undefined ? moneyValueToNumber(realizedPnl) : 0;
         const unrealizedValue = unrealizedPnl !== null && unrealizedPnl !== undefined ? moneyValueToNumber(unrealizedPnl) : 0;
+        const unrealizedPercent = position.unrealized_profit_percent; // price-only % based on corrected avg
 
         const isProfit = totalValue > 0;
         const isLoss = totalValue < 0;
@@ -280,39 +267,28 @@ export function createPositionColumns(
                   isProfit && "text-success",
                   isLoss && "text-error"
                 )}
-                title="Click for P&L breakdown"
               >
                 {formatMoneyValue(totalPnl)}
               </span>
-              <span className="text-xs text-secondary-text flex items-center gap-1">
-                <span className="material-symbols-outlined text-[12px]">
-                  info
+              <div className={cn(
+                "flex items-center justify-end gap-1 text-xs",
+                profitDisplay.color
+              )}>
+                <span className="material-symbols-outlined text-sm">
+                  {profitDisplay.icon}
                 </span>
-                Breakdown
-              </span>
+                <span>{profitDisplay.text}</span>
+              </div>
             </div>
 
-            {/* Tooltip on hover */}
-            <div className="absolute right-0 top-full mt-2 w-56 p-3 bg-card border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+            {/* Breakdown tooltip on hover */}
+            <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-card border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
               <div className="space-y-2 text-sm">
                 <div className="font-semibold text-primary-text border-b border-border pb-1">
-                  P&L Breakdown
+                  Breakdown
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-secondary-text">Realized:</span>
-                  <span
-                    className={cn(
-                      "font-medium",
-                      realizedValue > 0 && "text-success",
-                      realizedValue < 0 && "text-error",
-                      realizedValue === 0 && "text-secondary-text"
-                    )}
-                  >
-                    {realizedPnl !== null && realizedPnl !== undefined ? formatMoneyValue(realizedPnl) : "—"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-secondary-text">Unrealized:</span>
+                  <span className="text-secondary-text">Unrealized</span>
                   <span
                     className={cn(
                       "font-medium",
@@ -321,12 +297,63 @@ export function createPositionColumns(
                       unrealizedValue === 0 && "text-secondary-text"
                     )}
                   >
-                    {unrealizedPnl !== null && unrealizedPnl !== undefined ? formatMoneyValue(unrealizedPnl) : "—"}
+                    {unrealizedPnl ? formatMoneyValue(unrealizedPnl) : "—"}
+                    {" "}
+                    ({formatProfitDisplay(unrealizedPercent).text})
                   </span>
                 </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-secondary-text">Realized</span>
+                  <span
+                    className={cn(
+                      "font-medium",
+                      realizedValue > 0 && "text-success",
+                      realizedValue < 0 && "text-error",
+                      realizedValue === 0 && "text-secondary-text"
+                    )}
+                  >
+                    {realizedPnl ? formatMoneyValue(realizedPnl) : "—"}
+                  </span>
+                </div>
+                {position.total_nkd && moneyValueToNumber(position.total_nkd) !== 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-secondary-text">Total ACI</span>
+                    <span className="font-medium text-success">
+                      {formatMoneyValue(position.total_nkd)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center">
+                  <span className="text-secondary-text">FIFO profit</span>
+                  <span
+                    className={cn(
+                      "font-medium",
+                      position.profit_fifo > 0 && "text-success",
+                      position.profit_fifo < 0 && "text-error",
+                      position.profit_fifo === 0 && "text-secondary-text"
+                    )}
+                  >
+                    {formatProfitDisplay(position.profit_fifo).text}
+                  </span>
+                </div>
+                {position.expected_yield && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-secondary-text">Expected yield (FIFO)</span>
+                    <span
+                      className={cn(
+                        "font-medium",
+                        moneyValueToNumber(position.expected_yield) > 0 && "text-success",
+                        moneyValueToNumber(position.expected_yield) < 0 && "text-error",
+                        moneyValueToNumber(position.expected_yield) === 0 && "text-secondary-text"
+                      )}
+                    >
+                      {formatMoneyValue(position.expected_yield)}
+                    </span>
+                  </div>
+                )}
                 <div className="border-t border-border pt-1 mt-1">
                   <div className="flex justify-between items-center font-semibold">
-                    <span className="text-primary-text">Total:</span>
+                    <span className="text-primary-text">Total</span>
                     <span
                       className={cn(
                         isProfit && "text-success",
@@ -348,7 +375,6 @@ export function createPositionColumns(
         const b = moneyValueToNumber(rowB.original.total_pnl);
         return a - b;
       },
-      enableHiding: true,
     },
 
     // Target Progress column
@@ -441,4 +467,3 @@ export function createPositionColumns(
     },
   ];
 }
-

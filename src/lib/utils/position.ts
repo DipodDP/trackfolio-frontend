@@ -1,7 +1,6 @@
-import { MoneyValue, EnrichedPosition, PlanPosition } from "@/types/portfolio";
+import { EnrichedPosition, PlanPosition } from "@/types/portfolio";
 import { TablePosition } from "@/types/position";
-import { moneyValueToNumber } from "./money";
-import { quotationToNumber } from "@/utils/formatters"; // Import quotationToNumber
+import { quotationToNumber } from "@/utils/formatters";
 
 /**
  * Filters out currency positions from the positions array
@@ -19,16 +18,10 @@ export function mergePositionWithPlan(
   enrichedPos: EnrichedPosition,
   planPos: PlanPosition | undefined
 ): TablePosition {
-  // Convert profit from MoneyValue to number if available
-  const profitPercentage = parseFloat(enrichedPos.profit);
-  const totalValue = moneyValueToNumber(enrichedPos.total);
-  const profitAmount = totalValue * profitPercentage;
-
-  const profitValue: MoneyValue | null = {
-    currency: enrichedPos.total.currency,
-    units: Math.floor(profitAmount),
-    nano: Math.round((profitAmount - Math.floor(profitAmount)) * 1_000_000_000),
-  };
+  // Use backend-computed P&L values directly
+  const totalProfitPercent = enrichedPos.total_profit_percent !== null
+    ? parseFloat(enrichedPos.total_profit_percent)
+    : parseFloat(enrichedPos.profit);
 
   return {
     // Core identification
@@ -43,14 +36,21 @@ export function mergePositionWithPlan(
     total: enrichedPos.total,
     proportion: parseFloat(enrichedPos.proportion),
     proportion_in_portfolio: parseFloat(enrichedPos.proportion_in_portfolio),
-    profit: profitValue,
-    profit_percentage: profitPercentage,
+    profit: enrichedPos.total_pnl,
+    profit_percentage: totalProfitPercent,
     lot: enrichedPos.lot_size,
 
     // P&L Breakdown
     realized_pnl: enrichedPos.realized_pnl,
     unrealized_pnl: enrichedPos.unrealized_pnl,
     total_pnl: enrichedPos.total_pnl,
+    total_profit_percent: enrichedPos.total_profit_percent !== null
+      ? parseFloat(enrichedPos.total_profit_percent)
+      : null,
+    unrealized_profit_percent: parseFloat(enrichedPos.profit),
+    profit_fifo: parseFloat(enrichedPos.profit_fifo),
+    expected_yield: enrichedPos.expected_yield,
+    total_nkd: enrichedPos.total_nkd,
 
     // Plan data (with defaults if plan doesn't exist)
     plan_quantity: planPos?.plan_quantity ? quotationToNumber(planPos.plan_quantity) : 0,

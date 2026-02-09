@@ -16,7 +16,6 @@ import {
   formatQuotation,
   formatPercent,
 } from "@/utils/formatters";
-import { moneyValueToNumber } from "@/lib/utils/money";
 import {
   formatProfitDisplay,
   formatInstrumentType,
@@ -59,12 +58,21 @@ export function PortfolioTable({
         total: position.total,
         proportion: parseFloat(position.proportion),
         proportion_in_portfolio: parseFloat(position.proportion_in_portfolio),
-        profit: null, // Profit calculation is complex, omitting for now
-        profit_percentage: parseFloat(position.profit),
+        profit: position.total_pnl,
+        profit_percentage: position.total_profit_percent !== null
+          ? parseFloat(position.total_profit_percent)
+          : parseFloat(position.profit),
         lot: position.lot_size,
         realized_pnl: position.realized_pnl,
         unrealized_pnl: position.unrealized_pnl,
         total_pnl: position.total_pnl,
+        total_profit_percent: position.total_profit_percent !== null
+          ? parseFloat(position.total_profit_percent)
+          : null,
+        unrealized_profit_percent: parseFloat(position.profit),
+        profit_fifo: parseFloat(position.profit_fifo),
+        expected_yield: position.expected_yield,
+        total_nkd: position.total_nkd,
         plan_quantity: plan.plan_quantity.units,
         plan_total: plan.plan_total,
         plan_proportion_in_portfolio: parseFloat(plan.plan_proportion_in_portfolio),
@@ -118,17 +126,10 @@ export function PortfolioTable({
               const targetProgress = plan
                 ? parseFloat(plan.target_progress) * 100
                 : 0;
-              const profitPercentage = parseFloat(position.profit);
-              const totalValue = moneyValueToNumber(position.total);
-              const profitAmount = totalValue * profitPercentage;
-
-              const profitValue = {
-                currency: position.total.currency,
-                units: Math.floor(profitAmount),
-                nano: Math.round(
-                  (profitAmount - Math.floor(profitAmount)) * 1_000_000_000
-                ),
-              };
+              const profitPercentage = position.total_profit_percent !== null
+                ? parseFloat(position.total_profit_percent)
+                : parseFloat(position.profit);
+              const profitValue = position.total_pnl;
 
               const profitDisplay = formatProfitDisplay(profitPercentage);
               const instrumentType = formatInstrumentType(
@@ -185,7 +186,7 @@ export function PortfolioTable({
                     className={`text-right font-medium ${profitDisplay.color}`}
                   >
                     <div className="flex flex-col items-end">
-                      <span>{formatMoneyValue(profitValue)}</span>
+                      <span>{profitValue ? formatMoneyValue(profitValue) : "—"}</span>
                       <div className="flex items-center justify-end gap-1 text-xs">
                         <span className="material-symbols-outlined text-sm">
                           {profitDisplay.icon}

@@ -77,6 +77,7 @@ export interface EnrichedPosition {
   total: MoneyValue;
   expected_yield: MoneyValue | null;
   current_nkd: MoneyValue | null;
+  total_nkd: MoneyValue;
   proportion: string;
   proportion_in_portfolio: string;
   profit: string;
@@ -85,6 +86,8 @@ export interface EnrichedPosition {
   realized_pnl: MoneyValue | null;
   unrealized_pnl: MoneyValue | null;
   total_pnl: MoneyValue | null;
+  total_profit_percent: string | null;
+  total_fees: MoneyValue | null;
 }
 
 export interface PlanPosition {

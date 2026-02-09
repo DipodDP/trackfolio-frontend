@@ -80,6 +80,7 @@ export default function DashboardPage() {
     allocationSegments,
     legendItems,
     totalCurrencies,
+    totalFees,
     enrichedPositions, // Added for new PortfolioTable
     planPositions // Added for new PortfolioTable
   } = useMemo(() => {
@@ -93,6 +94,7 @@ export default function DashboardPage() {
         allocationSegments: { current: [], target: [] },
         legendItems: [],
         totalCurrencies: { currency: 'rub', units: 0, nano: 0 }, // Default MoneyValue
+        totalFees: { currency: 'RUB' as const, units: 0, nano: 0 },
         enrichedPositions: [],
         planPositions: []
       };
@@ -110,42 +112,62 @@ export default function DashboardPage() {
 
     const totalPortfolio = consolidated_portfolio.total_amount_portfolio;
 
-    // totalProfitLoss calculation
+    // totalProfitLoss calculation - use backend-computed total_pnl directly
     const totalProfitLossAmount = enriched_positions.reduce((sum, pos) => {
-      const profitPercentage = parseFloat(pos.profit || '0');
-      const totalValue = moneyValueToNumber(pos.total);
-      const profitAmount = totalValue * profitPercentage;
-      return sum + profitAmount;
+      if (pos.total_pnl) {
+        return sum + moneyValueToNumber(pos.total_pnl);
+      }
+      return sum;
     }, 0);
-    // Convert totalProfitLossAmount to MoneyValue
     const totalProfitLoss: MoneyValue = {
-      currency: totalPortfolio.currency, // Use portfolio currency
+      currency: totalPortfolio.currency,
       units: Math.floor(totalProfitLossAmount),
       nano: Math.round((totalProfitLossAmount % 1) * 1_000_000_000),
     };
 
+    // P&L percentage = total_pnl / total_invested_capital
+    // total_invested = sum(market_value) - sum(total_pnl) for positions with P&L data
+    const totalInvested = enriched_positions.reduce((sum, pos) => {
+      const marketValue = moneyValueToNumber(pos.total);
+      const pnl = pos.total_pnl ? moneyValueToNumber(pos.total_pnl) : 0;
+      return sum + (marketValue - pnl);
+    }, 0);
     const plPercentage =
-      moneyValueToNumber(totalPortfolio) > 0 ? (moneyValueToNumber(totalProfitLoss) / moneyValueToNumber(totalPortfolio)) * 100 : 0;
+      totalInvested > 0 ? (totalProfitLossAmount / totalInvested) * 100 : 0;
+
+    // Sum total fees across all enriched positions
+    const totalFeesAmount = enriched_positions.reduce((sum, pos) => {
+      if (pos.total_fees) {
+        return sum + moneyValueToNumber(pos.total_fees);
+      }
+      return sum;
+    }, 0);
+    const totalFees: MoneyValue = {
+      currency: totalPortfolio.currency,
+      units: Math.floor(totalFeesAmount),
+      nano: Math.round((totalFeesAmount % 1) * 1_000_000_000),
+    };
 
     const positions: Position[] = enriched_positions.slice(0, 5).map((pos) => {
       const plan_pos = plan_positions.find((p) => p.figi === pos.figi);
-        const profitPercentage = parseFloat(pos.profit || '0');
-        const totalValue = moneyValueToNumber(pos.total);
-        const profitAmount = totalValue * profitPercentage;
+        const profitAmount = pos.total_pnl ? moneyValueToNumber(pos.total_pnl) : 0;
+        const profitPercentage = pos.total_profit_percent !== null
+          ? parseFloat(pos.total_profit_percent) * 100
+          : parseFloat(pos.profit || '0') * 100;
         return {
           ticker: pos.ticker,
           name: pos.name,
           instrumentType: pos.instrument_type,
-          price: moneyValueToNumber(pos.current_price), // Convert MoneyValue to number
-          quantity: quotationToNumber(pos.quantity), // Convert Quotation to number
-          total: moneyValueToNumber(pos.total), // Convert MoneyValue to number
+          price: moneyValueToNumber(pos.current_price),
+          quantity: quotationToNumber(pos.quantity),
+          total: moneyValueToNumber(pos.total),
           planTotal: plan_pos?.plan_total
             ? moneyValueToNumber(plan_pos.plan_total)
-            : 0, // Convert MoneyValue to number
+            : 0,
           proportion: parseFloat(pos.proportion_in_portfolio) * 100,
           profit: {
             amount: profitAmount,
-            percent: profitPercentage * 100,
+            percent: profitPercentage,
           },
           targetProgress: parseFloat(plan_pos?.target_progress || '0'),
         };
@@ -247,6 +269,7 @@ export default function DashboardPage() {
       allocationSegments,
       legendItems,
       totalCurrencies,
+      totalFees,
       enrichedPositions: enriched_positions,
       planPositions: plan_positions
     };
@@ -406,6 +429,7 @@ export default function DashboardPage() {
                 value: `${plPercentage >= 0 ? "+" : ""}${plPercentage.toFixed(2)}%`,
                 isPositive: plPercentage >= 0,
               }}
+              subtitle={`Fees: ${formatMoneyValue(totalFees)}`}
               icon="trending_up"
               accentColor="success"
             />

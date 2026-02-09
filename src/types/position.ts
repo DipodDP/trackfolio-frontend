@@ -25,6 +25,11 @@ export interface TablePosition {
   realized_pnl: MoneyValue | null;
   unrealized_pnl: MoneyValue | null;
   total_pnl: MoneyValue | null;
+  total_profit_percent: number | null;
+  unrealized_profit_percent: number; // Price-only % based on corrected avg
+  profit_fifo: number; // FIFO profit percentage
+  expected_yield: MoneyValue | null; // Broker expected yield
+  total_nkd: MoneyValue; // Total total coupon interest for bonds (0 for non-bonds)
 
   // Plan data (from PlanPosition)
   plan_quantity: number;
