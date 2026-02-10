@@ -33,6 +33,7 @@ import { PortfolioTable } from "@/components/portfolio/PortfolioTable";
 import { StructureTable } from "@/components/portfolio/StructureTable";
 import { PortfolioSummary } from "@/components/portfolio/PortfolioSummary";
 import { CurrencyBreakdown } from "@/components/portfolio/CurrencyBreakdown";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { formatMoneyValue, moneyValueToNumber } from "@/lib/utils/money";
 import { quotationToNumber, formatPercent } from "@/utils/formatters"; // Import quotationToNumber and formatPercent
@@ -58,6 +59,7 @@ export default function DashboardPage() {
 
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [selectedPositionForOrder, setSelectedPositionForOrder] = useState<{ position: TablePosition, recommendation: Recommendation } | null>(null);
+  const [hideZeroAllocation, setHideZeroAllocation] = useState(true);
 
   const handleRecommendationClick = (rec: Recommendation) => {
     const enrichedPos = enrichedPositions.find(p => p.ticker === rec.ticker);
@@ -508,14 +510,30 @@ export default function DashboardPage() {
           <section className="mt-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-text-primary">Portfolio Positions</h2>
-              <Link href="/positions" className="text-sm text-secondary hover:text-primary transition-colors flex items-center gap-1">
-                Manage
-                <span className="material-symbols-outlined text-base">chevron_right</span>
-              </Link>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hide-zero-allocation"
+                    checked={hideZeroAllocation}
+                    onCheckedChange={setHideZeroAllocation}
+                  />
+                  <label
+                    htmlFor="hide-zero-allocation"
+                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Hide zero target allocation
+                  </label>
+                </div>
+                <Link href="/positions" className="text-sm text-secondary hover:text-primary transition-colors flex items-center gap-1">
+                  Manage
+                  <span className="material-symbols-outlined text-base">chevron_right</span>
+                </Link>
+              </div>
             </div>
             <PortfolioTable
               enrichedPositions={enrichedPositions}
               planPositions={planPositions}
+              hideZeroAllocation={hideZeroAllocation}
             />
           </section>
 

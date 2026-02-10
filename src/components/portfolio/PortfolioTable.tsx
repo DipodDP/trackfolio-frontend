@@ -26,6 +26,7 @@ import { EditTargetsDialog } from "@/app/positions/components/dialogs/EditTarget
 interface PortfolioTableProps {
   enrichedPositions: EnrichedPosition[];
   planPositions: PlanPosition[];
+  hideZeroAllocation: boolean;
   onSort?: (column: string, direction: "asc" | "desc") => void;
   onRefresh?: () => void;
 }
@@ -33,6 +34,7 @@ interface PortfolioTableProps {
 export function PortfolioTable({
   enrichedPositions,
   planPositions,
+  hideZeroAllocation,
   onSort,
   onRefresh,
 }: PortfolioTableProps) {
@@ -43,6 +45,16 @@ export function PortfolioTable({
     () => new Map(planPositions.map((p) => [p.figi, p])),
     [planPositions]
   );
+
+  const filteredPositions = useMemo(() => {
+    if (hideZeroAllocation) {
+      return enrichedPositions.filter((p) => {
+        const plan = planLookup.get(p.figi);
+        return plan && parseFloat(plan.plan_proportion_in_portfolio) > 0;
+      });
+    }
+    return enrichedPositions;
+  }, [enrichedPositions, planLookup, hideZeroAllocation]);
 
   const handleProportionClick = useCallback(
     (position: EnrichedPosition, plan: PlanPosition | undefined) => {
@@ -121,7 +133,7 @@ export function PortfolioTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {enrichedPositions.map((position) => {
+            {filteredPositions.map((position) => {
               const plan = planLookup.get(position.figi);
               const targetProgress = plan
                 ? parseFloat(plan.target_progress) * 100

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import { Header, CosmicBackground } from "@/components/layout";
@@ -27,6 +27,7 @@ export default function PositionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [hideZeroAllocation, setHideZeroAllocation] = useState(true);
 
   // Fetch portfolio data
   const fetchPortfolioData = useCallback(async () => {
@@ -81,13 +82,22 @@ export default function PositionsPage() {
   };
 
   // Transform data for table
-  const tableData =
-    portfolioData && !isLoading
-      ? transformToTableFormat(
-          portfolioData.enriched_positions,
-          portfolioData.plan_positions
-        )
-      : [];
+  const tableData = useMemo(() => {
+    if (!portfolioData || isLoading) return [];
+
+    const transformedData = transformToTableFormat(
+      portfolioData.enriched_positions,
+      portfolioData.plan_positions
+    );
+
+    if (hideZeroAllocation) {
+      return transformedData.filter(
+        (p) => p.plan_proportion_in_portfolio > 0
+      );
+    }
+
+    return transformedData;
+  }, [portfolioData, isLoading, hideZeroAllocation]);
 
   // Show empty state if no accounts selected
   if (!selectedApiClientId || selectedAccountIds.length === 0) {
@@ -238,7 +248,12 @@ export default function PositionsPage() {
 
             {/* Positions table */}
             <div className="card p-6">
-              <PositionsDataTable data={tableData} onRefresh={handleRefresh} />
+              <PositionsDataTable
+                data={tableData}
+                onRefresh={handleRefresh}
+                hideZeroAllocation={hideZeroAllocation}
+                onHideZeroAllocationChange={setHideZeroAllocation}
+              />
             </div>
           </div>
           <DataFreshness

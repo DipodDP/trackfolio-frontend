@@ -33,11 +33,15 @@ import { createPositionColumns } from "./columns/position-columns";
 interface PositionsDataTableProps {
   data: TablePosition[];
   onRefresh?: () => void;
+  hideZeroAllocation: boolean;
+  onHideZeroAllocationChange: (value: boolean) => void;
 }
 
 export function PositionsDataTable({
   data,
   onRefresh,
+  hideZeroAllocation,
+  onHideZeroAllocationChange,
 }: PositionsDataTableProps) {
   // Table state
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -107,7 +111,11 @@ export function PositionsDataTable({
   return (
     <div className="space-y-4">
       {/* Toolbar with search and filters */}
-      <DataTableToolbar table={table} />
+      <DataTableToolbar
+        table={table}
+        hideZeroAllocation={hideZeroAllocation}
+        onHideZeroAllocationChange={onHideZeroAllocationChange}
+      />
 
       {/* Table */}
       <div className="rounded-lg border border-border/50 bg-card">

@@ -3,14 +3,19 @@
 import { Table } from "@tanstack/react-table";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox"; // Assuming you have a Checkbox component
 import { DataTableViewOptions } from "./DataTableViewOptions";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
+  hideZeroAllocation: boolean;
+  onHideZeroAllocationChange: (value: boolean) => void;
 }
 
 export function DataTableToolbar<TData>({
   table,
+  hideZeroAllocation,
+  onHideZeroAllocationChange,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
@@ -38,7 +43,22 @@ export function DataTableToolbar<TData>({
           </Button>
         )}
       </div>
-      <DataTableViewOptions table={table} />
+      <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="hide-zero-allocation"
+            checked={hideZeroAllocation}
+            onCheckedChange={onHideZeroAllocationChange}
+          />
+          <label
+            htmlFor="hide-zero-allocation"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            Hide zero target allocation
+          </label>
+        </div>
+        <DataTableViewOptions table={table} />
+      </div>
     </div>
   );
 }
