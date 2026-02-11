@@ -7,9 +7,12 @@ jest.mock('@/store/authStore', () => ({
     getState: jest.fn(() => ({
       accessToken: 'mock-auth-token',
       user: null,
-      isAuthenticated: true
-    }))
-  }
+      isAuthenticated: true,
+      getAccessToken: () => 'mock-auth-token',
+      setAccessToken: jest.fn(),
+      logout: jest.fn(),
+    })),
+  },
 }));
 
 const mockFullPortfolioAnalysisResponse: FullPortfolioAnalysisResponse = {

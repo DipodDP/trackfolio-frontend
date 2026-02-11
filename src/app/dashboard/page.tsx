@@ -199,59 +199,87 @@ export default function DashboardPage() {
     const targetStructure = structure_analysis.plan_low_risk; // Corrected path
 
     const allocationSegments = {
-      current: [
-        {
-          label: "Shares",
-          value: parseFloat(structure_analysis.current_high_risk.component_proportions.shares || '0') * 100,
-          color: "bg-primary",
-          riskType: 'high' as const,
-        },
-        {
-          label: "ETFs",
-          value: parseFloat(structure_analysis.current_high_risk.component_proportions.etf || '0') * 100,
-          color: "bg-coral",
-          riskType: 'high' as const,
-        },
-        {
-          label: "Bonds",
-          value: parseFloat(structure_analysis.current_low_risk.component_proportions.corp_bonds || '0') * 100,
-          color: "bg-warning",
-          riskType: 'low' as const,
-        },
-        {
-          label: "Gov Bonds",
-          value: parseFloat(structure_analysis.current_low_risk.component_proportions.gov_bonds || '0') * 100,
-          color: "bg-success",
-          riskType: 'low' as const,
-        },
-      ],
+      current: (() => {
+        const currentHighRiskProportion = parseFloat(structure_analysis.current_high_risk.proportion_in_portfolio || '0');
+        const currentLowRiskProportion = parseFloat(structure_analysis.current_low_risk.proportion_in_portfolio || '0');
+
+        // component_proportions = percentage within risk bucket (sums to 100% per bucket)
+        // proportion_in_portfolio = risk bucket's share of total portfolio
+        //
+        // For DISPLAY: show raw bucket-internal percentage
+        // For WIDTH: scale by portfolio proportion for visual sizing
+        return [
+          {
+            label: "Shares",
+            value: parseFloat(structure_analysis.current_high_risk.component_proportions.shares || '0') * currentHighRiskProportion * 100,
+            displayValue: parseFloat(structure_analysis.current_high_risk.component_proportions.shares || '0') * 100,
+            color: "bg-primary",
+            riskType: 'high' as const,
+          },
+          {
+            label: "ETFs",
+            value: parseFloat(structure_analysis.current_high_risk.component_proportions.etf || '0') * currentHighRiskProportion * 100,
+            displayValue: parseFloat(structure_analysis.current_high_risk.component_proportions.etf || '0') * 100,
+            color: "bg-coral",
+            riskType: 'high' as const,
+          },
+          {
+            label: "Bonds",
+            value: parseFloat(structure_analysis.current_low_risk.component_proportions.corp_bonds || '0') * currentLowRiskProportion * 100,
+            displayValue: parseFloat(structure_analysis.current_low_risk.component_proportions.corp_bonds || '0') * 100,
+            color: "bg-warning",
+            riskType: 'low' as const,
+          },
+          {
+            label: "Gov Bonds",
+            value: parseFloat(structure_analysis.current_low_risk.component_proportions.gov_bonds || '0') * currentLowRiskProportion * 100,
+            displayValue: parseFloat(structure_analysis.current_low_risk.component_proportions.gov_bonds || '0') * 100,
+            color: "bg-success",
+            riskType: 'low' as const,
+          },
+        ];
+      })(),
       target: structure_analysis.plan_high_risk && structure_analysis.plan_low_risk
-        ? [
-            {
-              label: "Shares",
-              value: parseFloat(structure_analysis.plan_high_risk.component_proportions.shares || '0') * 100,
-              color: "bg-primary",
-              riskType: 'high' as const,
-            },
-            {
-              label: "ETFs",
-              value: parseFloat(structure_analysis.plan_high_risk.component_proportions.etf || '0') * 100,
-              color: "bg-coral",
-              riskType: 'high' as const,
-            },
-            {
-              label: "Bonds",
-              value: parseFloat(structure_analysis.plan_low_risk.component_proportions.corp_bonds || '0') * 100,
-              color: "bg-warning",
-              riskType: 'low' as const,
-            },
-            {
-              label: "Gov Bonds",
-              value: parseFloat(structure_analysis.plan_low_risk.component_proportions.gov_bonds || '0') * 100,
-              color: "bg-success",
-              riskType: 'low' as const,
-            },
-          ]
+        ? (() => {
+            const planHighRiskProportion = parseFloat(structure_analysis.plan_high_risk.proportion_in_portfolio || '0');
+            const planLowRiskProportion = parseFloat(structure_analysis.plan_low_risk.proportion_in_portfolio || '0');
+
+            // component_proportions = percentage within risk bucket (sums to 100% per bucket)
+            // proportion_in_portfolio = risk bucket's share of total portfolio
+            //
+            // For DISPLAY: show raw bucket-internal percentage
+            // For WIDTH: scale by portfolio proportion for visual sizing
+            return [
+              {
+                label: "Shares",
+                value: parseFloat(structure_analysis.plan_high_risk.component_proportions.shares || '0') * planHighRiskProportion * 100,
+                displayValue: parseFloat(structure_analysis.plan_high_risk.component_proportions.shares || '0') * 100,
+                color: "bg-primary",
+                riskType: 'high' as const,
+              },
+              {
+                label: "ETFs",
+                value: parseFloat(structure_analysis.plan_high_risk.component_proportions.etf || '0') * planHighRiskProportion * 100,
+                displayValue: parseFloat(structure_analysis.plan_high_risk.component_proportions.etf || '0') * 100,
+                color: "bg-coral",
+                riskType: 'high' as const,
+              },
+              {
+                label: "Bonds",
+                value: parseFloat(structure_analysis.plan_low_risk.component_proportions.corp_bonds || '0') * planLowRiskProportion * 100,
+                displayValue: parseFloat(structure_analysis.plan_low_risk.component_proportions.corp_bonds || '0') * 100,
+                color: "bg-warning",
+                riskType: 'low' as const,
+              },
+              {
+                label: "Gov Bonds",
+                value: parseFloat(structure_analysis.plan_low_risk.component_proportions.gov_bonds || '0') * planLowRiskProportion * 100,
+                displayValue: parseFloat(structure_analysis.plan_low_risk.component_proportions.gov_bonds || '0') * 100,
+                color: "bg-success",
+                riskType: 'low' as const,
+              },
+            ];
+          })()
         : [],
     };
 

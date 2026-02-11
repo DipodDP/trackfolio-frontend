@@ -26,14 +26,24 @@ function RiskStripe({ highRiskWidth, lowRiskWidth }: RiskStripeProps) {
     <div className="flex items-center space-x-4">
       <span className="w-32"></span>
       <div className="flex-1 flex flex-col">
-        <div className="flex gap-[2px]">
+        <div className="flex gap-[2px] items-start justify-start">
           <div
-            className="h-4 bg-primary/20 border-l border-r border-primary/30"
-            style={{ width: `${highRiskWidth}%`, minWidth: '16px' }}
+            className="h-4 bg-primary/10 border-l border-r border-primary/30"
+            style={{
+              width: `calc(${highRiskWidth}% + 4px)`,
+              minWidth: "2px",
+              marginLeft: "2px",
+              marginRight: "0px",
+            }}
           ></div>
           <div
-            className="h-4 bg-success/20 border-l border-r border-success/30"
-            style={{ width: `${lowRiskWidth}%`, minWidth: '16px' }}
+            className="h-4 bg-success/10 border-l border-r border-success/30 shrink flex items-start justify-start"
+            style={{
+              width: `calc(${lowRiskWidth}% - 2px)`,
+              minWidth: "16px",
+              marginLeft: "0px",
+              marginRight: "2px",
+            }}
           ></div>
         </div>
       </div>
@@ -49,19 +59,11 @@ export function RiskBreakdown({
 }: RiskBreakdownProps) {
   if (!analysis) return null;
 
-  const currentHighRiskWidth =
-    (allocationSegments.current.find((s) => s.label === "Shares")?.value || 0) +
-    (allocationSegments.current.find((s) => s.label === "ETFs")?.value || 0);
-  const currentLowRiskWidth =
-    (allocationSegments.current.find((s) => s.label === "Bonds")?.value || 0) +
-    (allocationSegments.current.find((s) => s.label === "Gov Bonds")?.value || 0);
+  const currentHighRiskWidth = analysis.current_high_risk.proportion_in_portfolio * 100;
+  const currentLowRiskWidth = analysis.current_low_risk.proportion_in_portfolio * 100;
 
-  const targetHighRiskWidth =
-    (allocationSegments.target.find((s) => s.label === "Shares")?.value || 0) +
-    (allocationSegments.target.find((s) => s.label === "ETFs")?.value || 0);
-  const targetLowRiskWidth =
-    (allocationSegments.target.find((s) => s.label === "Bonds")?.value || 0) +
-    (allocationSegments.target.find((s) => s.label === "Gov Bonds")?.value || 0);
+  const targetHighRiskWidth = analysis.plan_high_risk.proportion_in_portfolio * 100;
+  const targetLowRiskWidth = analysis.plan_low_risk.proportion_in_portfolio * 100;
 
   return (
     <Card className="p-6 lg:h-[659px] flex flex-col">
@@ -76,8 +78,10 @@ export function RiskBreakdown({
               <div className="flex-1 flex flex-col">
                 <div className="flex gap-[2px] mb-0">
                   <div
-                    className="flex items-center justify-between p-2 px-3 bg-primary/10 border border-primary/30 rounded-t-lg min-w-0 flex-shrink"
-                    style={{ width: `${currentHighRiskWidth}%` }}
+                    className="flex items-center justify-between p-2 px-3 bg-primary/10 border-x border-t border-primary/30 rounded-t-lg min-w-0 flex-shrink ml-[2px]"
+                    style={{
+                      width: `calc(${currentHighRiskWidth}% + 4px)`,
+                    }}
                   >
                     <span className="text-xs font-medium text-text-secondary uppercase tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">High Risk</span>
                     <div className="flex items-center gap-2 ml-2 flex-shrink-0">
@@ -92,8 +96,10 @@ export function RiskBreakdown({
                     </div>
                   </div>
                   <div
-                    className="flex items-center justify-between p-2 px-3 bg-success/10 border border-success/30 rounded-t-lg min-w-fit flex-grow"
-                    style={{ width: `${currentLowRiskWidth}%` }}
+                    className="flex items-center justify-between p-2 px-3 bg-success/10 border-x border-t border-success/30 rounded-t-lg min-w-fit flex-shrink mr-[2px]"
+                    style={{
+                      width: `calc(${currentLowRiskWidth}% - 2px)`,
+                    }}
                   >
                     <span className="text-xs font-medium text-text-secondary uppercase tracking-wide whitespace-nowrap">Low Risk</span>
                     <div className="flex items-center gap-2 ml-2 flex-shrink-0">
@@ -101,7 +107,7 @@ export function RiskBreakdown({
                         {formatPercent(analysis.current_low_risk.proportion_in_portfolio)}
                       </span>
                       {analysis.plan_low_risk && (
-                        <span className="text-xs text-text-secondary whitespace-nowrap">
+                        <span className="text-xs text-text-secondary whitespace-nowrap mr-1">
                           → {formatPercent(analysis.plan_low_risk.proportion_in_portfolio)}
                         </span>
                       )}
