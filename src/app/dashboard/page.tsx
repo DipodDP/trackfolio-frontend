@@ -84,7 +84,9 @@ export default function DashboardPage() {
     totalCurrencies,
     totalFees,
     enrichedPositions, // Added for new PortfolioTable
-    planPositions // Added for new PortfolioTable
+    planPositions, // Added for new PortfolioTable
+    totalInvested,
+    totalInvestedPercentage
   } = useMemo(() => {
     if (!analysis) {
       return {
@@ -134,6 +136,10 @@ export default function DashboardPage() {
       const pnl = pos.total_pnl ? moneyValueToNumber(pos.total_pnl) : 0;
       return sum + (marketValue - pnl);
     }, 0);
+
+    const totalPortfolioValue = moneyValueToNumber(totalPortfolio);
+    const totalInvestedPercentage = totalPortfolioValue > 0 ? (totalInvested / totalPortfolioValue) * 100 : 0;
+
     const plPercentage =
       totalInvested > 0 ? (totalProfitLossAmount / totalInvested) * 100 : 0;
 
@@ -301,7 +307,9 @@ export default function DashboardPage() {
       totalCurrencies,
       totalFees,
       enrichedPositions: enriched_positions,
-      planPositions: plan_positions
+      planPositions: plan_positions,
+      totalInvested, // Add totalInvested here
+      totalInvestedPercentage // Add totalInvestedPercentage here
     };
   }, [analysis]);
 
@@ -445,10 +453,7 @@ export default function DashboardPage() {
             <StatCard
               title="Total Portfolio Value"
               value={formatMoneyValue(analysis.consolidated_portfolio.total_amount_portfolio)}
-              change={{
-                value: `${plPercentage.toFixed(2)}%`,
-                isPositive: plPercentage >= 0,
-              }}
+              subtitle={`Invested: ${formatMoneyValue({ currency: totalPortfolio.currency, units: Math.floor(totalInvested), nano: Math.round((totalInvested % 1) * 1_000_000_000) })} (${totalInvestedPercentage.toFixed(2)}% of portfolio)`}
               accentColor="primary"
               data-testid="portfolio-total"
             />
@@ -459,7 +464,6 @@ export default function DashboardPage() {
                 value: `${plPercentage >= 0 ? "+" : ""}${plPercentage.toFixed(2)}%`,
                 isPositive: plPercentage >= 0,
               }}
-              subtitle={`Fees: ${formatMoneyValue(totalFees)}`}
               icon="trending_up"
               accentColor="success"
             />

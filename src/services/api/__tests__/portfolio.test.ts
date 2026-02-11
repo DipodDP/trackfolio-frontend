@@ -1,5 +1,7 @@
 import { getFullPortfolioAnalysis } from '../portfolio';
 import { FullPortfolioAnalysisResponse } from '@/types/portfolio';
+import apiClient from '@/lib/api-client';
+import MockAdapter from 'axios-mock-adapter';
 
 // Mock the authStore module
 jest.mock('@/store/authStore', () => ({
@@ -52,57 +54,40 @@ const mockFullPortfolioAnalysisResponse: FullPortfolioAnalysisResponse = {
 };
 
 describe('getFullPortfolioAnalysis', () => {
+  let mock: MockAdapter;
+
   beforeEach(() => {
-    jest.clearAllMocks();
+    mock = new MockAdapter(apiClient);
+  });
+
+  afterEach(() => {
+    mock.restore();
   });
 
   it('should call correct endpoint with POST method', async () => {
-    const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue({
-      ok: true,
-      json: async () => mockFullPortfolioAnalysisResponse
-    } as Response);
+    mock.onPost('/api-clients/123/portfolio-analysis/full').reply(200, mockFullPortfolioAnalysisResponse);
 
     await getFullPortfolioAnalysis(123, { account_ids: ['2000000000'] });
 
-    expect(fetchSpy).toHaveBeenCalledWith(
-      'http://localhost:8000/api/v1/api-clients/123/portfolio-analysis/full',
-      expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer mock-auth-token'
-        }),
-        body: JSON.stringify({ account_ids: ['2000000000'] })
-      })
-    );
+    expect(mock.history.post.length).toBe(1);
+    expect(mock.history.post[0].url).toBe('/api-clients/123/portfolio-analysis/full');
+    expect(mock.history.post[0].headers?.['Authorization']).toBe('Bearer mock-auth-token');
+    expect(JSON.parse(mock.history.post[0].data)).toEqual({ account_ids: ['2000000000'] });
   });
 
   it('should throw error if response is not ok', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue({
-      ok: false,
-      statusText: 'Not Found'
-    } as Response);
+    mock.onPost('/api-clients/123/portfolio-analysis/full').reply(404, { message: 'Not Found' });
 
     await expect(
       getFullPortfolioAnalysis(123, { account_ids: [] })
-    ).rejects.toThrow('Portfolio analysis failed: Not Found');
+    ).rejects.toThrow('Request failed with status code 404');
   });
 
   it('should include authorization header', async () => {
-    const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue({
-      ok: true,
-      json: async () => mockFullPortfolioAnalysisResponse
-    } as Response);
+    mock.onPost('/api-clients/123/portfolio-analysis/full').reply(200, mockFullPortfolioAnalysisResponse);
 
     await getFullPortfolioAnalysis(123, { account_ids: ['2000000000'] });
 
-    expect(fetchSpy).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          'Authorization': 'Bearer mock-auth-token'
-        })
-      })
-    );
+    expect(mock.history.post[0].headers?.['Authorization']).toBe('Bearer mock-auth-token');
   });
 });

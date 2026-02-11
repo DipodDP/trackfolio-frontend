@@ -219,7 +219,7 @@ describe("PortfolioTable", () => {
       />
     );
 
-    const profitCell = screen.getByText("+197.65%");
+    const profitCell = screen.getByText("+140.50%");
     expect(profitCell.closest("td")).toHaveClass("text-success");
   });
 
@@ -267,7 +267,7 @@ describe("PortfolioTable", () => {
       />
     );
 
-    const proportionButton = screen.getByTitle("Click to edit target proportion");
+    const proportionButton = screen.getByTitle("Click to edit targets of the position");
     fireEvent.click(proportionButton);
 
     expect(screen.getByTestId("mock-dialog")).toBeInTheDocument();
@@ -283,7 +283,7 @@ describe("PortfolioTable", () => {
       />
     );
 
-    const proportionButton = screen.getByTitle("Click to edit target proportion");
+    const proportionButton = screen.getByTitle("Click to edit targets of the position");
     fireEvent.click(proportionButton);
 
     const saveButton = screen.getByText("Save");
