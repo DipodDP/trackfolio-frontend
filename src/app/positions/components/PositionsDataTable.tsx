@@ -44,12 +44,14 @@ export function PositionsDataTable({
   onHideZeroAllocationChange,
 }: PositionsDataTableProps) {
   // Table state
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>([
+    { id: "defaultSort", desc: false },
+  ]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
   const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+    React.useState<VisibilityState>({ defaultSort: false });
   const [rowSelection, setRowSelection] = React.useState({});
 
   // Modal state for editing target proportion

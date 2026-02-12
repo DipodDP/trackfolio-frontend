@@ -56,6 +56,31 @@ export function PortfolioTable({
     return enrichedPositions;
   }, [enrichedPositions, planLookup, hideZeroAllocation]);
 
+  const sortedPositions = useMemo(() => {
+    const instrumentTypeOrder: Record<string, number> = {
+      bond: 0,
+      etf: 1,
+      share: 2,
+    };
+
+    return [...filteredPositions].sort((a, b) => {
+      const typeA = a.instrument_type.toLowerCase();
+      const typeB = b.instrument_type.toLowerCase();
+
+      const orderA = instrumentTypeOrder[typeA] ?? 3;
+      const orderB = instrumentTypeOrder[typeB] ?? 3;
+
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+
+      return (
+        parseFloat(b.proportion_in_portfolio) -
+        parseFloat(a.proportion_in_portfolio)
+      );
+    });
+  }, [filteredPositions]);
+
   const handleProportionClick = useCallback(
     (position: EnrichedPosition, plan: PlanPosition | undefined) => {
       if (!plan) return;
@@ -133,7 +158,7 @@ export function PortfolioTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredPositions.map((position) => {
+            {sortedPositions.map((position) => {
               const plan = planLookup.get(position.figi);
               const targetProgress = plan
                 ? parseFloat(plan.target_progress) * 100

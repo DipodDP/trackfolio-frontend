@@ -55,6 +55,40 @@ export function createPositionColumns(
       enableHiding: false,
     },
 
+    // Default sort column (hidden)
+    {
+      accessorKey: "proportion_in_portfolio",
+      id: "defaultSort",
+      header: () => null,
+      cell: () => null,
+      enableHiding: false,
+      enableSorting: true,
+      sortingFn: (rowA, rowB) => {
+        const instrumentTypeOrder: Record<string, number> = {
+          bond: 0,
+          etf: 1,
+          share: 2,
+        };
+
+        const typeA = rowA.original.instrument_type;
+        const typeB = rowB.original.instrument_type;
+
+        const orderA = instrumentTypeOrder[typeA] ?? 3;
+        const orderB = instrumentTypeOrder[typeB] ?? 3;
+
+        // First, sort by instrument type
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+
+        // Then, sort by proportion in portfolio (descending)
+        const proportionA = rowA.original.proportion_in_portfolio;
+        const proportionB = rowB.original.proportion_in_portfolio;
+
+        return proportionB - proportionA;
+      },
+    },
+
     // Ticker column
     {
       accessorKey: "ticker",

@@ -63,6 +63,26 @@ export function PositionsTable({
     );
   }
 
+  const sortedPositions = [...positions].sort((a, b) => {
+    const instrumentTypeOrder: Record<string, number> = {
+      bond: 0,
+      etf: 1,
+      share: 2,
+    };
+
+    const typeA = a.instrumentType.toLowerCase();
+    const typeB = b.instrumentType.toLowerCase();
+
+    const orderA = instrumentTypeOrder[typeA] ?? 3;
+    const orderB = instrumentTypeOrder[typeB] ?? 3;
+
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+
+    return b.proportion - a.proportion;
+  });
+
   return (
     <div className="overflow-x-auto">
       <table className="table">
@@ -80,7 +100,7 @@ export function PositionsTable({
           </tr>
         </thead>
         <tbody>
-          {positions.map((position, index) => (
+          {sortedPositions.map((position, index) => (
             <tr key={index} className="group">
               <td>
                 <div className="flex items-center gap-2">
