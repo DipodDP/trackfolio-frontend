@@ -231,7 +231,7 @@
 
   /* Progress Bar */
   .progress {
-    @apply h-3 border rounded-full w-full overflow-hidden;
+    @apply h-3 border rounded-full w-full overflow-hidden flex;
     border-color: var(--border);
     background-color: rgba(var(--background), 0.5);
   }

@@ -137,7 +137,8 @@ export function PositionsTable({
                     value={position.targetProgress}
                     showLabel
                     size="sm"
-                    color={position.targetProgress >= 80 ? "coral" : "coral"}
+                    color={position.targetProgress >= 0 ? "success" : "coral"}
+                    isExitProgress
                   />
                 </div>
               </td>

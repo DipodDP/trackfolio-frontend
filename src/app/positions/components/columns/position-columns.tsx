@@ -434,6 +434,7 @@ export function createPositionColumns(
               color={targetProgress >= 0 ? "success" : "coral"}
               showLabel
               size="sm"
+              isExitProgress
             />
           </div>
         );

@@ -7,6 +7,7 @@ interface ProgressProps {
   size?: "sm" | "md" | "lg";
   color?: "coral" | "success" | "error" | "primary";
   className?: string;
+  isExitProgress?: boolean;
 }
 
 const sizeClasses = {
@@ -29,7 +30,37 @@ export function Progress({
   size = "md",
   color = "coral",
   className = "",
+  isExitProgress = false,
 }: ProgressProps) {
+  if (isExitProgress) {
+    const isNegative = value < 0;
+    const percentage = Math.min(Math.max((Math.abs(value) / max) * 100, 0), 100);
+
+    return (
+      <div className={`flex items-center gap-2 ${className}`}>
+        <div
+          className={`progress ${sizeClasses[size]} flex-1 ${
+            isNegative ? "flex-row-reverse" : ""
+          }`}
+          role="progressbar"
+          aria-valuenow={value}
+          aria-valuemin={-max}
+          aria-valuemax={max}
+        >
+          <div
+            className={`progress-bar ${colorClasses[color]}`}
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+        {showLabel && (
+          <span className="text-xs text-secondary min-w-[3ch] text-right">
+            {Math.round(value)}%
+          </span>
+        )}
+      </div>
+    );
+  }
+
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
 
   return (
