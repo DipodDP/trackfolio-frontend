@@ -100,7 +100,9 @@ export default function DashboardPage() {
         totalCurrencies: { currency: 'rub', units: 0, nano: 0 }, // Default MoneyValue
         totalFees: { currency: 'RUB' as const, units: 0, nano: 0 },
         enrichedPositions: [],
-        planPositions: []
+        planPositions: [],
+        totalInvested: 0,
+        totalInvestedPercentage: 0
       };
     }
 
@@ -547,7 +549,7 @@ export default function DashboardPage() {
                   <Checkbox
                     id="hide-zero-allocation"
                     checked={hideZeroAllocation}
-                    onCheckedChange={setHideZeroAllocation}
+                    onCheckedChange={(checked) => setHideZeroAllocation(checked === true)}
                   />
                   <label
                     htmlFor="hide-zero-allocation"

@@ -59,11 +59,11 @@ export function RiskBreakdown({
 }: RiskBreakdownProps) {
   if (!analysis) return null;
 
-  const currentHighRiskWidth = analysis.current_high_risk.proportion_in_portfolio * 100;
-  const currentLowRiskWidth = analysis.current_low_risk.proportion_in_portfolio * 100;
+  const currentHighRiskWidth = parseFloat(analysis.current_high_risk.proportion_in_portfolio) * 100;
+  const currentLowRiskWidth = parseFloat(analysis.current_low_risk.proportion_in_portfolio) * 100;
 
-  const targetHighRiskWidth = analysis.plan_high_risk.proportion_in_portfolio * 100;
-  const targetLowRiskWidth = analysis.plan_low_risk.proportion_in_portfolio * 100;
+  const targetHighRiskWidth = analysis.plan_high_risk ? parseFloat(analysis.plan_high_risk.proportion_in_portfolio) * 100 : 0;
+  const targetLowRiskWidth = analysis.plan_low_risk ? parseFloat(analysis.plan_low_risk.proportion_in_portfolio) * 100 : 0;
 
   return (
     <Card className="p-6 lg:h-[659px] flex flex-col">
