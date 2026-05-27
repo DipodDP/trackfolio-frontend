@@ -23,7 +23,7 @@ export default function LoginPage() {
     try {
       // Login endpoint expects form data, not JSON
       const formData = new URLSearchParams();
-      formData.append("username", username);
+      formData.append("username", username.toLowerCase());
       formData.append("password", password);
 
       const response = await apiClient.post<LoginResponse>("/login", formData, {
