@@ -36,7 +36,7 @@ test.describe("Token Refresh Flow", () => {
         await route.fulfill({
           status: 401,
           contentType: "application/json",
-          body: JSON.stringify({ detail: "Token expired" }),
+          body: JSON.stringify({ code: "UNAUTHORIZED", message: "Token expired", details: {}, trace_id: "e2e" }),
         });
       } else {
         // After refresh, succeed
@@ -108,7 +108,7 @@ test.describe("Token Refresh Flow", () => {
         await route.fulfill({
           status: 401,
           contentType: "application/json",
-          body: JSON.stringify({ detail: "Token expired" }),
+          body: JSON.stringify({ code: "UNAUTHORIZED", message: "Token expired", details: {}, trace_id: "e2e" }),
         });
       }
     });
@@ -118,7 +118,7 @@ test.describe("Token Refresh Flow", () => {
       await route.fulfill({
         status: 401,
         contentType: "application/json",
-        body: JSON.stringify({ detail: "Refresh token invalid" }),
+        body: JSON.stringify({ code: "UNAUTHORIZED", message: "Refresh token invalid", details: {}, trace_id: "e2e" }),
       });
     });
 
@@ -171,7 +171,7 @@ test.describe("Token Refresh Flow", () => {
         await route.fulfill({
           status: 401,
           contentType: "application/json",
-          body: JSON.stringify({ detail: "Token expired" }),
+          body: JSON.stringify({ code: "UNAUTHORIZED", message: "Token expired", details: {}, trace_id: "e2e" }),
         });
       }
     });

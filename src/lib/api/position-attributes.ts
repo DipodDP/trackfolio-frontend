@@ -1,5 +1,6 @@
 import apiClient from "@/lib/api-client";
 import type { PositionAttributesUpdate } from "@/lib/schemas/position.schema";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 /**
  * Response type for position attributes update
@@ -54,18 +55,8 @@ export async function updatePositionAttributes(
           throw new Error("Invalid proportion value. Must be between 0% and 100%");
         case 404:
           throw new Error("Position attributes not found. Please refresh and try again");
-        case 422:
-          // Extract specific validation error from response
-          const detail = data?.detail;
-          if (Array.isArray(detail) && detail.length > 0) {
-            const firstError = detail[0];
-            throw new Error(firstError.msg || "Validation error");
-          }
-          throw new Error(JSON.stringify(detail) || "Validation error");
         default:
-          throw new Error(
-            JSON.stringify(data?.detail) || `Update failed with status ${status}`
-          );
+          throw new Error(getApiErrorMessage(error, `Update failed with status ${status}`));
       }
     }
 

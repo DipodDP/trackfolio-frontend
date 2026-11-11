@@ -18,7 +18,6 @@ export interface ApiClient {
   broker_type: string;
   is_sandbox: boolean;
   created_at: string;
-  token?: string;
 }
 
 export interface BrokerAccount {
@@ -181,6 +180,8 @@ export interface PortfolioStructure {
 
 // Error Response Type
 export interface ApiError {
-  detail: string;
-  code?: string;
+  code: string;
+  message: string;
+  details: Record<string, unknown>;
+  trace_id: string;
 }

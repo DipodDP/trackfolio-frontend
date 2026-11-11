@@ -13,6 +13,7 @@ import { numberToMoneyValue } from "@/lib/utils/money";
 import { Skeleton } from "@/components/ui";
 import { PositionsDataTable } from "./components/PositionsDataTable";
 import { DataFreshness } from "@/components/dashboard";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 export default function PositionsPage() {
   const router = useRouter();
@@ -56,10 +57,7 @@ export default function PositionsPage() {
       setLastUpdated(new Date());
     } catch (err: any) {
       console.error("Positions: API Error:", err);
-      setError(
-        err.response?.data?.detail ||
-          "Failed to load portfolio data. Please try again."
-      );
+      setError(getApiErrorMessage(err, "Failed to load portfolio data. Please try again."));
     } finally {
       setIsLoading(false);
     }

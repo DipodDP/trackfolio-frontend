@@ -8,6 +8,7 @@ import { Badge, Button } from "@/components/ui";
 import apiClient from "@/lib/api-client";
 import type { ApiClient } from "@/types/api";
 import { useAppStore } from "@/store/appStore";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 export default function ApiClientsPage() {
   const router = useRouter();
@@ -48,8 +49,7 @@ export default function ApiClientsPage() {
       setFormData({ broker_type: "t_investments", token: "", is_sandbox: true });
       fetchClients();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      setError(error.response?.data?.detail || "Failed to add API client");
+      setError(getApiErrorMessage(err, "Failed to add API client"));
     }
   };
 
