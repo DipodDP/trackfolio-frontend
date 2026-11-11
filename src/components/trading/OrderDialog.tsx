@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +50,12 @@ export function OrderDialog({
   const [quantity, setQuantity] = useState(Math.abs(recommendedLots));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Identifies one intended order. It is kept across a retry whose outcome is unknown so the
+  // broker executes it only once, and replaced whenever a different order is being made.
+  const idempotencyKey = useRef(crypto.randomUUID());
+  const startNewOrder = () => {
+    idempotencyKey.current = crypto.randomUUID();
+  };
 
   // Calculate estimated total if price is available
   const currentPrice = instrument.currentPrice ?? null;
@@ -66,6 +72,7 @@ export function OrderDialog({
     const value = parseInt(e.target.value) || 0;
     setQuantity(value);
     setError(null);
+    startNewOrder();
   };
 
   const handleSubmit = async () => {
@@ -101,7 +108,9 @@ export function OrderDialog({
         figi: instrument.figi,
         lots: quantity,
         direction: orderType as OrderDirection,
+        idempotencyKey: idempotencyKey.current,
       });
+      startNewOrder();
 
       // Success!
       toast.success(
@@ -121,6 +130,9 @@ export function OrderDialog({
       setQuantity(Math.abs(recommendedLots));
       setError(null);
     } catch (err: any) {
+      if (!err.outcomeUnknown) {
+        startNewOrder(); // definitely not placed, so the next attempt is a new order
+      }
       const errorMessage = err.message || "Failed to execute order";
       setError(errorMessage);
       toast.error(`✗ Order failed: ${errorMessage}`);
@@ -130,6 +142,7 @@ export function OrderDialog({
   };
 
   const handleCancel = () => {
+    startNewOrder();
     onOpenChange(false);
     // Reset state
     setQuantity(Math.abs(recommendedLots));
