@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import apiClient from "@/lib/api-client";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -40,16 +41,7 @@ export default function RegisterPage() {
       router.push("/login?registered=true");
     } catch (err: any) {
       console.error("Registration error:", err);
-      if (err.response?.data?.detail && Array.isArray(err.response.data.detail)) {
-        // Handle Pydantic validation errors
-        const errorMsg = err.response.data.detail.map((d: any) => d.msg).join(", ");
-        setError(errorMsg);
-      } else if (err.response?.data?.detail) {
-        // Handle other string-based errors
-        setError(err.response.data.detail);
-      } else {
-        setError("Registration failed. Please try again.");
-      }
+      setError(getApiErrorMessage(err, "Registration failed. Please try again."));
     } finally {
       setLoading(false);
     }
