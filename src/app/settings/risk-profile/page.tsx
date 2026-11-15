@@ -7,6 +7,7 @@ import { Header, CosmicBackground } from "@/components/layout";
 import { Button, Card, Slider, Skeleton } from "@/components/ui";
 import apiClient from "@/lib/api-client";
 import type { PortfolioStructure } from "@/types/api";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 // All proportions are percentages
 interface FormData {
@@ -63,9 +64,7 @@ function RiskProfilePageContent() {
         }
       } catch (err: any) {
         if (err.response?.status !== 404) {
-          setError(
-            err.response?.data?.detail || "Failed to load risk profile."
-          );
+          setError(getApiErrorMessage(err, "Failed to load risk profile."));
         }
       } finally {
         setIsLoading(false);
@@ -139,9 +138,7 @@ function RiskProfilePageContent() {
       setExistingStructure(response.data);
       setSuccess("Risk profile saved successfully!");
     } catch (err: any) {
-      setError(
-        JSON.stringify(err.response?.data?.detail) || "Failed to save profile."
-      );
+      setError(getApiErrorMessage(err, "Failed to save profile."));
     } finally {
       setIsSaving(false);
     }

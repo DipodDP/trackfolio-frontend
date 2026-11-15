@@ -7,6 +7,7 @@ import apiClient from "@/lib/api-client";
 import type { BrokerAccount, BrokerAccountsResponse } from "@/types/api";
 import AuthGuard from "@/components/AuthGuard";
 import { Header, CosmicBackground } from "@/components/layout";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 export default function AccountsPage() {
   return (
@@ -55,10 +56,7 @@ function AccountsPageContent() {
         setIsSandbox(response.data.is_sandbox);
       } catch (err: any) {
         console.error("Failed to fetch accounts:", err);
-        setError(
-          err.response?.data?.detail ||
-            "Failed to fetch broker accounts. Please try again."
-        );
+        setError(getApiErrorMessage(err, "Failed to fetch broker accounts. Please try again."));
       } finally {
         setIsLoading(false);
       }

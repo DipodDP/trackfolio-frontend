@@ -10,6 +10,8 @@ export interface PlaceOrderParams {
   figi: string;
   lots: number;
   direction: OrderDirection;
+  /** UUID identifying this order attempt; reuse it when retrying an order whose outcome is unknown */
+  idempotencyKey: string;
 }
 
 export interface OrderResponse {
@@ -26,4 +28,5 @@ export interface OrderRequest {
   lots: number;
   direction: OrderDirection;
   account_id: string;
+  idempotency_key: string;
 }

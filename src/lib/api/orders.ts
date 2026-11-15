@@ -3,17 +3,33 @@
  */
 
 import apiClient from "@/lib/api-client";
+import { getApiErrorMessage } from "@/lib/api-error";
 import type { PlaceOrderParams, OrderResponse, OrderRequest } from "@/types/trading";
+
+/**
+ * A failed order. `outcomeUnknown` is true when the request may still have reached the
+ * broker (timeout, gateway or network failure): retry with the same idempotency key so
+ * the order cannot be placed twice. When false the order was definitely not placed.
+ */
+export class OrderError extends Error {
+  constructor(
+    message: string,
+    public readonly outcomeUnknown: boolean
+  ) {
+    super(message);
+    this.name = "OrderError";
+  }
+}
 
 /**
  * Place a market order for buying or selling an instrument
  *
- * @param params - Order parameters including API client ID, account ID, FIGI, lots, and direction
+ * @param params - Order parameters; `idempotencyKey` is a UUID that identifies this order attempt
  * @returns Order execution response with order ID, status, and execution details
- * @throws Error with user-friendly message if order execution fails
+ * @throws OrderError with a user-friendly message if order execution fails
  */
 export async function placeMarketOrder(params: PlaceOrderParams): Promise<OrderResponse> {
-  const { apiClientId, accountId, figi, lots, direction } = params;
+  const { apiClientId, accountId, figi, lots, direction, idempotencyKey } = params;
 
   // Validate parameters
   if (!apiClientId) {
@@ -42,6 +58,7 @@ export async function placeMarketOrder(params: PlaceOrderParams): Promise<OrderR
     lots,
     direction,
     account_id: accountId,
+    idempotency_key: idempotencyKey,
   };
 
   try {
@@ -53,25 +70,12 @@ export async function placeMarketOrder(params: PlaceOrderParams): Promise<OrderR
 
     return response.data;
   } catch (error: any) {
-    // Handle specific error cases
-    if (error.response) {
-      const { status, data } = error.response;
-
-      switch (status) {
-        case 400:
-          throw new Error(JSON.stringify(data.detail) || "Invalid order request");
-        case 404:
-          throw new Error("API client not found");
-        case 504:
-          throw new Error("Order request timed out. Please try again.");
-        case 502:
-          throw new Error(JSON.stringify(data.detail) || "Failed to execute order");
-        default:
-          throw new Error(JSON.stringify(data.detail) || `Order failed with status ${status}`);
-      }
+    const status: number | undefined = error.response?.status;
+    if (status === undefined) {
+      throw new OrderError("Failed to execute order. Please check your connection.", true);
     }
-
-    // Network or unknown error
-    throw new Error(error.message || "Failed to execute order. Please check your connection.");
+    const fallback =
+      status === 504 ? "Order request timed out. Please try again." : `Order failed with status ${status}`;
+    throw new OrderError(getApiErrorMessage(error, fallback), status >= 500);
   }
 }

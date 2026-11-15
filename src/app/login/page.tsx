@@ -6,6 +6,7 @@ import Link from "next/link";
 import apiClient, { setAccessToken } from "@/lib/api-client";
 import { useAuthStore, type User } from "@/store/authStore";
 import type { LoginResponse } from "@/types/api";
+import { getApiErrorMessage } from "@/lib/api-error";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -46,9 +47,7 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err: any) {
       console.error("Login error:", err);
-      setError(
-        err.response?.data?.detail || "Login failed. Please check your credentials."
-      );
+      setError(getApiErrorMessage(err, "Login failed. Please check your credentials."));
     } finally {
       setLoading(false);
     }
