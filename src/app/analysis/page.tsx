@@ -2,49 +2,34 @@
 
 import AuthGuard from "@/components/AuthGuard";
 import { Header, CosmicBackground } from "@/components/layout";
+import { RecommendationsPanel } from "@/components/recommendations/RecommendationsPanel";
+import { useAppStore } from "@/store/appStore";
+import { useAuthStore } from "@/store/authStore";
 
 export default function AnalysisPage() {
+  const apiClientId = useAppStore(state => state.selectedApiClientId);
+  const hasHydrated = useAppStore(state => state._hasHydrated);
+  const user = useAuthStore(state => state.user);
+
   return (
     <AuthGuard>
       <CosmicBackground />
       <div className="grain-overlay" />
-
       <div className="relative min-h-screen">
         <Header />
-        <main className="container-app py-8">
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-4xl font-display text-primary tracking-wider mb-2">
-                PORTFOLIO ANALYSIS
-              </h1>
-              <p className="text-secondary-text">
-                Comprehensive portfolio insights and rebalancing recommendations
-              </p>
-            </div>
-
-            <div className="card">
-              <div className="text-center py-12">
-                <span className="material-symbols-outlined text-6xl text-secondary-text mb-4">
-                  analytics
-                </span>
-                <h3 className="text-xl font-display text-primary-text mb-2">
-                  Analysis Not Available
-                </h3>
-                <p className="text-secondary-text mb-4">
-                  Connect an API client and configure your risk profile to run
-                  portfolio analysis
-                </p>
-                <div className="flex gap-4 justify-center">
-                  <a href="/settings/api-clients" className="btn-primary">
-                    Add API Client
-                  </a>
-                  <a href="/settings/risk-profile" className="btn-secondary">
-                    Configure Risk Profile
-                  </a>
-                </div>
-              </div>
-            </div>
+        <main className="container-app py-8 space-y-6">
+          <div>
+            <h1 className="text-4xl font-display text-primary tracking-wider mb-2">
+              PORTFOLIO ANALYSIS
+            </h1>
+            <p className="text-secondary-text max-w-3xl">
+              Compare your channel’s model portfolio with your current targets,
+              then choose which allocation changes to apply.
+            </p>
           </div>
+          {user && hasHydrated ? (
+            <RecommendationsPanel apiClientId={apiClientId} userId={String(user.id)} />
+          ) : <p role="status">Loading your portfolio settings…</p>}
         </main>
       </div>
     </AuthGuard>
