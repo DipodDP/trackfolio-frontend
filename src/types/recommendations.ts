@@ -35,6 +35,7 @@ export interface ProposalItem {
 }
 
 export interface Proposal {
+  revision: string;
   items: ProposalItem[];
   not_in_model: {
     figi: string;

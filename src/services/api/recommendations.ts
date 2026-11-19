@@ -6,9 +6,9 @@ export async function getProposal(apiClientId: number): Promise<Proposal> {
   return data;
 }
 
-export async function applyProposal(apiClientId: number, figis: string[]): Promise<{ applied: ProposalItem[] }> {
+export async function applyProposal(apiClientId: number, figis: string[], revision: string): Promise<{ applied: ProposalItem[] }> {
   const { data } = await apiClient.post<{ applied: ProposalItem[] }>(
-    `/api-clients/${apiClientId}/recommendations/proposal/apply`, { figis }
+    `/api-clients/${apiClientId}/recommendations/proposal/apply`, { figis, revision }
   );
   return data;
 }

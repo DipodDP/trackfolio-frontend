@@ -26,9 +26,7 @@ Qualified-investor and market-order warnings do not prevent updating targets.
 Targets outside the model stay unchanged. Channel target prices are informational
 and do not update `target_profit`.
 
-The backend rebuilds the proposal at apply time; the API has no version precondition
-for locking the displayed weights. The page notes this behavior and sends an explicit
-FIGI selection, never an implicit apply-all request. After an apply error, refresh
+The frontend submits the reviewed proposal revision with the selected FIGIs. The backend rebuilds the proposal and returns HTTP 409 before writing targets if the revision changed. After an apply error, refresh
 before selecting changes again. Mutation requests are not automatically retried.
 Selections reset on user/broker changes, refresh, import, or successful apply.
 
@@ -41,7 +39,7 @@ All paths are relative to `/api/v1` and use the existing authenticated API clien
 | GET | `/recommendations/model-portfolio` | Load the user's stored model |
 | PUT | `/recommendations/model-portfolio` | Import/replace a validated checkpoint |
 | GET | `/api-clients/{id}/recommendations/proposal` | Resolve instruments and compare targets |
-| POST | `/api-clients/{id}/recommendations/proposal/apply` | Apply explicit `{ "figis": [...] }` selection |
+| POST | `/api-clients/{id}/recommendations/proposal/apply` | Apply explicit `{ "figis": [...], "revision": "..." }` selection |
 
 ## Verification
 

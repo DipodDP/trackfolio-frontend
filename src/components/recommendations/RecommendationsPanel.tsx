@@ -35,7 +35,7 @@ function RecommendationsWorkspace({ apiClientId, userId }: { apiClientId: number
   const proposal = useQuery({ queryKey: proposalKey, queryFn: () => getProposal(apiClientId!), enabled: !!apiClientId && !!model.data && !model.isError, retry: false, refetchOnWindowFocus: false });
   const selected = selection && selection.proposal === proposal.data ? selection.figis : [];
   const apply = useMutation({
-    mutationFn: (figis: string[]) => applyProposal(apiClientId!, figis),
+    mutationFn: ({ figis, revision }: { figis: string[]; revision: string }) => applyProposal(apiClientId!, figis, revision),
     retry: false,
     onSuccess: async (result) => {
       setSelection(null);
@@ -84,28 +84,29 @@ function RecommendationsWorkspace({ apiClientId, userId }: { apiClientId: number
       {proposal.isFetching && <p role="status">Loading proposal…</p>}
       {proposal.isError && <p role="alert" className="text-error">{getApiErrorMessage(proposal.error, 'Could not load the proposal. Refresh to try again.')}</p>}
       {proposal.data && !proposal.isError && <>
+        {!proposal.data.revision && <p role="alert">Target updates require a proposal revision from the server. Refresh after the server is updated.</p>}
         <p className="text-secondary-text">Proposed model allocation: <strong className="text-primary-text">{percent(proposal.data.proposed_total)}</strong></p>
         {Number(proposal.data.proposed_total) > 1 && <p className="text-warning">Model weights exceed 100%. Portfolio analysis normalizes targets when their total exceeds 100%.</p>}
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="proposal-table w-full text-sm text-left">
             <caption className="sr-only">Current and proposed portfolio targets</caption>
-            <thead className="border-b border-border text-secondary-text"><tr>{['Select', 'Instrument', 'Change', 'Current', 'Proposed', 'Context'].map(label => <th key={label} scope="col" className="px-3 py-3">{label}</th>)}</tr></thead>
+            <thead className="border-b border-border text-secondary-text"><tr>{['Select', 'Instrument', 'Change', 'Current target', 'Proposed target', 'Context'].map(label => <th key={label} scope="col" className="px-3 py-3">{label}</th>)}</tr></thead>
             <tbody className="divide-y divide-border">{proposal.data.items.map((item, index) => <tr key={item.figi || `unresolved-${index}`}>
-              <td className="px-3 py-4">{canApply(item) && <input type="checkbox" aria-label={`Select ${item.name}`} disabled={busy || apply.isError} checked={selected.includes(item.figi!)} onChange={e => {
+              <td className="px-3 py-4">{canApply(item) && <input type="checkbox" aria-label={`Select ${item.name}`} disabled={!proposal.data?.revision || busy || apply.isError} checked={selected.includes(item.figi!)} onChange={e => {
                 apply.reset(); setMessage('');
                 setSelection({ proposal: proposal.data!, figis: e.target.checked ? [...selected, item.figi!] : selected.filter(figi => figi !== item.figi) });
               }} className="h-4 w-4 accent-coral" />}</td>
               <td className="px-3 py-4"><strong>{item.name}</strong><p className="text-secondary-text">{item.ticker || item.isin || 'No identifier'}</p></td>
               <td className="px-3 py-4">{actions[item.action]}</td>
-              <td className="px-3 py-4 tabular-nums whitespace-nowrap">{percent(item.current_plan_proportion)}</td>
-              <td className="px-3 py-4 tabular-nums whitespace-nowrap font-semibold">{percent(item.proposed_plan_proportion)}</td>
+              <td className="px-3 py-4 tabular-nums whitespace-nowrap"><span className="block text-secondary-text md:hidden">Current target</span>{percent(item.current_plan_proportion)}</td>
+              <td className="px-3 py-4 tabular-nums whitespace-nowrap font-semibold"><span className="block text-secondary-text md:hidden">Proposed target</span>{percent(item.proposed_plan_proportion)}</td>
               <td className="px-3 py-4 min-w-48"><p>{item.comment}</p>{item.target_price !== null && <p className="text-secondary-text">Channel target price: {item.target_price}</p>}{item.warnings.map(warning => <p key={warning} className="text-warning">{warnings[warning] || warning}</p>)}</td>
             </tr>)}</tbody>
           </table>
         </div>
         {proposal.data.items.length === 0 && <p>The model portfolio has no positions to compare.</p>}
-        <p className="text-sm text-secondary-text">Channel target prices are reference values; they do not change profit targets. The latest model is checked again when you apply.</p>
-        <button className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed" disabled={busy || apply.isError || selected.length === 0} onClick={() => { setMessage(''); apply.mutate(selected); }}>Apply selected targets ({selected.length})</button>
+        <p className="text-sm text-secondary-text">Channel target prices are reference values; they do not change profit targets. If the proposal changes before you apply, refresh and review the updated targets.</p>
+        <button className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed" disabled={!proposal.data?.revision || busy || apply.isError || selected.length === 0} onClick={() => { setMessage(''); if (proposal.data.revision) apply.mutate({ figis: selected, revision: proposal.data.revision }); }}>Apply selected targets ({selected.length})</button>
         {proposal.data.not_in_model.length > 0 && <div className="border-t border-border pt-4"><h3 className="font-semibold">Targets outside the model</h3><p className="text-secondary-text mb-2">These targets stay unchanged.</p><ul className="space-y-2">{proposal.data.not_in_model.map(target => <li key={target.figi} className="flex justify-between gap-4"><span>{target.name || target.ticker || target.figi}</span><span className="tabular-nums">{percent(target.current_plan_proportion)}</span></li>)}</ul></div>}
       </>}
       {apply.isError && <p role="alert" className="text-error">{getApiErrorMessage(apply.error, 'Could not apply targets.')} Refresh the proposal before trying again.</p>}

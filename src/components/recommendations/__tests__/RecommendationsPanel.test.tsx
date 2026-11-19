@@ -7,7 +7,7 @@ import type { Proposal } from '@/types/recommendations';
 
 const model = { portfolio: { structure_notes: 'Diversified model', positions: [] }, last_message_id: 42, updated_at: '2026-11-17T16:27:26Z' };
 const item = { name: 'Sberbank', ticker: 'SBER', isin: null, asset_class: 'share', figi: 'FIGI1', lot: 1, action: 'increase' as const, current_plan_proportion: '0.05', proposed_plan_proportion: '0.1', target_price: 400, comment: 'Hold', warnings: ['market_orders_unavailable' as const] };
-const proposal: Proposal = { items: [item, { ...item, name: 'Unknown', figi: null, action: 'unresolved' }], not_in_model: [{ figi: 'OTHER', name: 'Existing target', ticker: 'OLD', current_plan_proportion: '0.2' }], proposed_total: '0.1', model_updated_at: model.updated_at };
+const proposal: Proposal = { revision: 'reviewed', items: [item, { ...item, name: 'Unknown', figi: null, action: 'unresolved' }], not_in_model: [{ figi: 'OTHER', name: 'Existing target', ticker: 'OLD', current_plan_proportion: '0.2' }], proposed_total: '0.1', model_updated_at: model.updated_at };
 let mock: MockAdapter;
 let client: QueryClient;
 beforeEach(() => {
@@ -31,7 +31,7 @@ it('requires selection, shows warnings, applies only selected targets, and refre
   fireEvent.click(checkbox);
   fireEvent.click(screen.getByRole('button', { name: /Apply selected targets/ }));
   await screen.findByText('Applied 1 target change. No orders were placed.');
-  expect(JSON.parse(mock.history.post[0].data)).toEqual({ figis: ['FIGI1'] });
+  expect(JSON.parse(mock.history.post[0].data)).toEqual({ figis: ['FIGI1'], revision: 'reviewed' });
   expect(mock.history.post).toHaveLength(1);
   expect(client.getQueryState(['portfolio-analysis', 7])?.isInvalidated).toBe(true);
   await waitFor(() => expect(mock.history.get.filter(r => r.url?.endsWith('/proposal')).length).toBeGreaterThan(1));
@@ -91,4 +91,19 @@ it('shows proposal errors with a retry action', async () => {
   expect(await screen.findByRole('alert')).toHaveTextContent('Broker unavailable (ref: trace-7)');
   expect(screen.getByRole('button', { name: 'Refresh proposal' })).toBeEnabled();
   expect(screen.queryByRole('button', { name: /Apply selected targets/ })).not.toBeInTheDocument();
+});
+
+it('requires a reviewable revision before enabling Apply', async () => {
+  mock.onGet('/api-clients/7/recommendations/proposal').reply(200, { ...proposal, revision: undefined });
+  mount();
+  expect(await screen.findByRole('checkbox', { name: 'Select Sberbank' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: /Apply selected targets/ })).toBeDisabled();
+});
+
+it('labels both target weights inside each row for the stacked phone layout', async () => {
+  mount();
+  const row = (await screen.findByRole('checkbox', { name: 'Select Sberbank' })).closest('tr');
+  expect(row).toHaveTextContent('Current target');
+  expect(row).toHaveTextContent('Proposed target');
+  expect(row).toHaveTextContent('Market orders unavailable');
 });

@@ -18,9 +18,9 @@ it('applies only explicit FIGIs, including an empty selection', async () => {
   const mock = new MockAdapter(apiClient);
   try {
     mock.onPost('/api-clients/7/recommendations/proposal/apply').reply(200, { applied: [] });
-    await applyProposal(7, ['FIGI1']);
-    await applyProposal(7, []);
-    expect(mock.history.post.map(r => JSON.parse(r.data))).toEqual([{ figis: ['FIGI1'] }, { figis: [] }]);
+    await applyProposal(7, ['FIGI1'], 'reviewed');
+    await applyProposal(7, [], 'reviewed');
+    expect(mock.history.post.map(r => JSON.parse(r.data))).toEqual([{ figis: ['FIGI1'], revision: 'reviewed' }, { figis: [], revision: 'reviewed' }]);
   } finally { mock.restore(); }
 });
 it('stores and reads the checkpoint envelope without losing metadata', async () => {
