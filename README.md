@@ -256,5 +256,6 @@ Detailed architecture and implementation guides are available in [`/docs`](./doc
 | [07](./docs/07_new_backend_integration.md) | Backend integration strategy |
 | [08](./docs/08_ui_state_and_data_flow.md) | State management architecture |
 | [09](./docs/09_auth_flow.md) | Authentication lifecycle |
+| [10](./docs/10_model_portfolio_proposals.md) | Model portfolio import and target proposals |
 | [10](./docs/10_testing_and_validation.md) | Testing strategy |
 

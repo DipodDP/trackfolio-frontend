@@ -416,7 +416,7 @@ export default function DashboardPage() {
                       Try Again
                     </button>
                     <button
-                      onClick={() => router.push("/settings/accounts")}
+                      onClick={() => router.push(`/settings/accounts?clientId=${apiClientId}`)}
                       className="btn btn-secondary"
                     >
                       Change Accounts

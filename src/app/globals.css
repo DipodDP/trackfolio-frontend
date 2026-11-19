@@ -398,3 +398,27 @@
     }
   }
 }
+
+@media (max-width: 767px) {
+  .proposal-table,
+  .proposal-table tbody { display: block; }
+
+  .proposal-table thead { @apply sr-only; }
+
+  .proposal-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    padding-block: 1rem;
+    gap: 0.5rem;
+    overflow-wrap: anywhere;
+  }
+
+  .proposal-table tbody td { min-width: 0; padding: 0; }
+  .proposal-table td:nth-child(1) { grid-area: 1 / 3; }
+  .proposal-table td:nth-child(1) input { width: 1.5rem; height: 1.5rem; }
+  .proposal-table td:nth-child(2) { grid-area: 1 / 1 / 2 / 3; }
+  .proposal-table td:nth-child(3) { grid-area: 2 / 1 / 3 / -1; }
+  .proposal-table td:nth-child(4) { grid-area: 3 / 1; }
+  .proposal-table td:nth-child(5) { grid-area: 3 / 2 / 4 / -1; }
+  .proposal-table td:nth-child(6) { grid-area: 4 / 1 / 5 / -1; }
+}
