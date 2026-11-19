@@ -191,7 +191,7 @@ export default function PositionsPage() {
                       Try Again
                     </button>
                     <button
-                      onClick={() => router.push("/settings/accounts")}
+                      onClick={() => router.push(`/settings/accounts?clientId=${selectedApiClientId}`)}
                       className="btn btn-secondary"
                     >
                       Change Accounts
